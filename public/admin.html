@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AladdinAI - Admin Mode">
+    <title>AladdinAI - Admin Mode (Editing)</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/admin-live.css">
+</head>
+<body>
+    <!-- Admin Control Panel -->
+    <div class="admin-controls" id="adminControls">
+        <div class="controls-header">
+            <h3>Admin Controls</h3>
+            <button id="toggleControls" class="btn-toggle">◀</button>
+        </div>
+
+        <div class="controls-content">
+            <div class="control-section">
+                <h4>Font Size</h4>
+                <label>
+                    Title: <span id="titleSizeVal">4</span>rem
+                    <input type="range" id="titleSizeSlider" min="2" max="8" step="0.1" value="4">
+                </label>
+                <label>
+                    Body: <span id="bodySizeVal">1.1</span>rem
+                    <input type="range" id="bodySizeSlider" min="0.8" max="2" step="0.1" value="1.1">
+                </label>
+            </div>
+
+            <div class="control-section">
+                <h4>Overlay Filter</h4>
+                <label>
+                    Min Transparency (Darkest): <span id="minTransparencyVal">0</span>%
+                    <input type="range" id="minTransparencySlider" min="0" max="100" step="5" value="0">
+                </label>
+                <label>
+                    Max Transparency (Lightest): <span id="maxTransparencyVal">30</span>%
+                    <input type="range" id="maxTransparencySlider" min="0" max="100" step="5" value="30">
+                </label>
+                <label>
+                    Animation Speed: <span id="animSpeedVal">10.7</span>s
+                    <input type="range" id="animSpeedSlider" min="5" max="20" step="0.5" value="10.7">
+                </label>
+            </div>
+
+            <div class="control-section">
+                <h4>Colors</h4>
+                <label>
+                    Font Color:
+                    <input type="color" id="fontColorPicker" value="#ffffff">
+                </label>
+            </div>
+
+            <div class="control-section">
+                <h4>Media Selection</h4>
+                <div class="upload-limits">
+                    <small>📊 Limits: Video ≤15MB (MP4), Audio ≤10MB (MP3/OGG)</small>
+                </div>
+                <label>
+                    Background Video:
+                    <select id="videoSelect" class="media-select">
+                        <option value="">Loading...</option>
+                    </select>
+                    <input type="file" id="videoUpload" accept="video/mp4,video/webm" style="display: none;">
+                </label>
+                <label>
+                    Background Audio:
+                    <select id="audioSelect" class="media-select">
+                        <option value="">Loading...</option>
+                    </select>
+                    <input type="file" id="audioUpload" accept="audio/mp3,audio/mpeg,audio/ogg,audio/wav" style="display: none;">
+                </label>
+            </div>
+
+            <div class="control-section">
+                <h4>🖼️ Card Background</h4>
+                <div class="upload-note">
+                    <small>💡 Screenshots are auto-generated from videos. Choose one below:</small>
+                </div>
+                <div class="library-category">
+                    <div id="screenshotLibrary" class="library-items screenshot-grid">
+                        <!-- Screenshot items will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h4>📚 Media Library</h4>
+                <div class="library-stats">
+                    <small>Total Size: <span id="librarySize">1.1 MB</span> / 20 MB</small>
+                </div>
+                <div class="media-library">
+                    <div class="library-category">
+                        <h5>Videos</h5>
+                        <div id="videoLibrary" class="library-items">
+                            <!-- Video items will be added here -->
+                        </div>
+                    </div>
+                    <div class="library-category">
+                        <h5>Audio</h5>
+                        <div id="audioLibrary" class="library-items">
+                            <!-- Audio items will be added here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="upload-note">
+                    <small>💡 Tip: Use <a href="https://www.freeconvert.com/video-compressor" target="_blank">online compressor</a> to optimize files for web</small>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h4>Video Playback</h4>
+                <label>
+                    Playback Speed: <span id="videoSpeedVal">100</span>%
+                    <input type="range" id="videoSpeedSlider" min="50" max="200" step="10" value="100">
+                </label>
+            </div>
+
+            <div class="control-actions">
+                <button id="saveBtn" class="btn-save">💾 Save All Changes</button>
+                <button id="resetBtn" class="btn-reset">🔄 Reset</button>
+                <button id="exitBtn" class="btn-exit">❌ Exit Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background Video -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline id="bgVideo">
+            <source src="assets/media/videos/background-video-slow.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="card">
+            <!-- Hero Section -->
+            <header class="hero">
+                <div class="logo">
+                    <h1 contenteditable="true" data-field="companyName">AladdinAI</h1>
+                </div>
+                <p class="tagline" contenteditable="true" data-field="tagline">Creating Innovative Tools Based on Agentic AI</p>
+            </header>
+
+            <!-- About Section -->
+            <section class="about">
+                <h2 contenteditable="true" data-field="aboutTitle">About Us</h2>
+                <p class="about-text" contenteditable="true" data-field="aboutText1">
+                    Founded in 2026 in Warsaw, AladdinAI brings together a group of professionals
+                    from IT, AI, Sales, Business, and Innovation with extensive experience across
+                    e-commerce, marketing, consulting, Data Science, Technology, Science, Business,
+                    and Engineering.
+                </p>
+                <p class="about-text" contenteditable="true" data-field="aboutText2">
+                    We're pioneering the future of agentic AI, creating tools that empower businesses
+                    to achieve more through intelligent automation and innovation.
+                </p>
+            </section>
+
+            <!-- Contact Section -->
+            <section class="contact">
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <div class="contact-icon">📧</div>
+                        <h3>Email</h3>
+                        <a href="mailto:aladdinai@aladdin.ai" contenteditable="true" data-field="contactEmail">aladdinai@aladdin.ai</a>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">📱</div>
+                        <h3>Phone</h3>
+                        <a href="tel:+48123123123" contenteditable="true" data-field="contactPhone">+48 123 123 123</a>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">📍</div>
+                        <h3>Office</h3>
+                        <p contenteditable="true" data-field="contactAddress">Str. Somewhere Nice<br>Top Floor 1/2<br>Warsaw, Poland</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer>
+                <p>&copy; 2026 AladdinAI. All rights reserved.</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-content">
+            <h2>🔐 Admin Authentication</h2>
+            <form id="loginForm">
+                <input type="password" id="adminPassword" placeholder="Enter admin password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p class="login-hint">Default password: admin123</p>
+        </div>
+    </div>
+
+    <script src="assets/js/admin-live.js"></script>
+</body>
+</html>

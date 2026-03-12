@@ -1,0 +1,536 @@
+/* Admin Live Edit Styles */
+
+/* Editable content highlight */
+[contenteditable="true"] {
+    outline: 2px dashed transparent;
+    transition: outline-color 0.3s;
+    cursor: text;
+}
+
+[contenteditable="true"]:hover {
+    outline-color: rgba(102, 126, 234, 0.5);
+}
+
+[contenteditable="true"]:focus {
+    outline-color: rgba(102, 126, 234, 0.8);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Admin Controls Panel */
+.admin-controls {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px 0 0 15px;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    width: 384px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+.admin-controls.collapsed {
+    transform: translateY(-50%) translateX(344px);
+}
+
+.controls-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.controls-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.btn-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+
+.btn-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.admin-controls.collapsed .btn-toggle {
+    transform: rotate(180deg);
+}
+
+.controls-content {
+    padding: 20px;
+}
+
+.control-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.control-section:last-of-type {
+    border-bottom: none;
+}
+
+.control-section h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.control-section label {
+    display: block;
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.control-section input[type="range"] {
+    width: 100%;
+    margin-top: 8px;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.control-section input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+}
+
+.control-section input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+}
+
+.control-section input[type="color"] {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.media-select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: border-color 0.3s;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 40px;
+}
+
+.media-select:hover {
+    border-color: #667eea;
+}
+
+.media-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.media-select option[value="browse"] {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.file-input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 2px dashed #e0e0e0;
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.file-input:hover {
+    border-color: #667eea;
+}
+
+.file-info {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.file-info small {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.upload-note {
+    margin-top: 12px;
+    padding: 10px;
+    background: #e7f3ff;
+    border-left: 3px solid #2196F3;
+    border-radius: 4px;
+}
+
+.upload-note small {
+    color: #0d47a1;
+    line-height: 1.4;
+}
+
+.upload-note a {
+    color: #1976d2;
+    text-decoration: underline;
+}
+
+.upload-limits {
+    padding: 8px;
+    background: #fff3cd;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.upload-limits small {
+    color: #856404;
+    font-weight: 500;
+}
+
+/* Media Library */
+.library-stats {
+    padding: 8px;
+    background: #e8f5e9;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.library-stats small {
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.media-library {
+    margin-top: 15px;
+}
+
+.library-category {
+    margin-bottom: 15px;
+}
+
+.library-category h5 {
+    margin: 0 0 10px 0;
+    color: #555;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.library-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.library-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.library-item:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.library-item.active {
+    border-color: #667eea;
+    background: #e8eaff;
+}
+
+.library-item-info {
+    flex: 1;
+}
+
+.library-item-name {
+    font-size: 0.85rem;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.library-item-size {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.library-item-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.library-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.library-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.library-btn.use {
+    color: #2196F3;
+}
+
+.library-btn.delete {
+    color: #dc3545;
+}
+
+.library-empty {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 2px dashed #e0e0e0;
+}
+
+/* Screenshot Grid */
+.screenshot-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.screenshot-item {
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 3px solid transparent;
+    transition: all 0.3s;
+    aspect-ratio: 16/9;
+}
+
+.screenshot-item:hover {
+    border-color: #667eea;
+    transform: scale(1.05);
+}
+
+.screenshot-item.active {
+    border-color: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.screenshot-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.screenshot-item-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    padding: 8px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.screenshot-item.active .screenshot-item-overlay {
+    background: linear-gradient(to top, rgba(40, 167, 69, 0.9), transparent);
+}
+
+.screenshot-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.control-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.control-actions button {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.control-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-reset {
+    background: #ffc107;
+    color: #333;
+}
+
+.btn-exit {
+    background: #dc3545;
+    color: white;
+}
+
+/* Login Modal */
+.login-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.login-modal.hidden {
+    display: none;
+}
+
+.login-content {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.login-content h2 {
+    margin-bottom: 25px;
+    color: #333;
+}
+
+.login-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.login-content input[type="password"] {
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.login-content input[type="password"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.login-content button {
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.login-content button:hover {
+    transform: translateY(-2px);
+}
+
+.login-hint {
+    margin-top: 15px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Scrollbar styling for admin panel */
+.admin-controls::-webkit-scrollbar {
+    width: 8px;
+}
+
+.admin-controls::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.admin-controls::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+.admin-controls::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .admin-controls {
+        width: 336px;
+    }
+
+    .admin-controls.collapsed {
+        transform: translateY(-50%) translateX(296px);
+    }
+}

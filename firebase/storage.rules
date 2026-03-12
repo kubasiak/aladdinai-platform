@@ -1,0 +1,32 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the file
+    function isOwner(customerId) {
+      return isAuthenticated() && request.auth.uid == customerId;
+    }
+
+    // Customer media files
+    match /customers/{customerId}/{allPaths=**} {
+      // Allow read/write only to the owning customer
+      allow read, write: if isOwner(customerId);
+    }
+
+    // Public assets (if needed)
+    match /public/{allPaths=**} {
+      allow read: if true;  // Anyone can read public files
+      allow write: if false;  // Only admins can write (via backend)
+    }
+
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
