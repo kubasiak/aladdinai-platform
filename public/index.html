@@ -22,21 +22,21 @@
             <!-- Hero Section -->
             <header class="hero">
                 <div class="logo">
-                    <h1>AladdinAI</h1>
+                    <h1 data-field="companyName">AladdinAI</h1>
                 </div>
-                <p class="tagline">Creating Innovative Tools Based on Agentic AI</p>
+                <p class="tagline" data-field="tagline">Creating Innovative Tools Based on Agentic AI</p>
             </header>
 
             <!-- About Section -->
             <section class="about">
-                <h2>About Us</h2>
-                <p class="about-text">
+                <h2 data-field="aboutTitle">About Us</h2>
+                <p class="about-text" data-field="aboutText1">
                     Founded in 2026 in Warsaw, AladdinAI brings together a group of professionals
                     from IT, AI, Sales, Business, and Innovation with extensive experience across
                     e-commerce, marketing, consulting, Data Science, Technology, Science, Business,
                     and Engineering.
                 </p>
-                <p class="about-text">
+                <p class="about-text" data-field="aboutText2">
                     We're pioneering the future of agentic AI, creating tools that empower businesses
                     to achieve more through intelligent automation and innovation.
                 </p>
@@ -48,17 +48,17 @@
                     <div class="contact-item">
                         <div class="contact-icon">📧</div>
                         <h3>Email</h3>
-                        <a href="mailto:aladdinai@aladdin.ai">aladdinai@aladdin.ai</a>
+                        <a href="mailto:aladdinai@aladdin.ai" data-field="contactEmail">aladdinai@aladdin.ai</a>
                     </div>
                     <div class="contact-item">
                         <div class="contact-icon">📱</div>
                         <h3>Phone</h3>
-                        <a href="tel:+48123123123">+48 123 123 123</a>
+                        <a href="tel:+48123123123" data-field="contactPhone">+48 123 123 123</a>
                     </div>
                     <div class="contact-item">
                         <div class="contact-icon">📍</div>
                         <h3>Office</h3>
-                        <p>Str. Somewhere Nice<br>Top Floor 1/2<br>Warsaw, Poland</p>
+                        <p data-field="contactAddress">Str. Somewhere Nice<br>Top Floor 1/2<br>Warsaw, Poland</p>
                     </div>
                 </div>
             </section>
@@ -70,6 +70,15 @@
         </div>
     </div>
 
-    <script src="assets/js/script.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Public Page (Firebase-enabled) -->
+    <script src="assets/js/index-firebase.js"></script>
 </body>
 </html>
