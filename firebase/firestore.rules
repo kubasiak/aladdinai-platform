@@ -14,30 +14,28 @@ service cloud.firestore {
 
     // Customer collection - root level
     match /customers/{customerId} {
-      // Allow read/write only to the authenticated customer
-      allow read, write: if isOwner(customerId);
+      // PUBLIC READ: Anyone can read customer data (for public landing pages)
+      // ADMIN WRITE: Only authenticated owner can write
+      allow read: if true;  // Public can view
+      allow write: if isOwner(customerId);  // Only admin can edit
 
       // Videos subcollection
       match /videos/{videoId} {
-        allow read, write: if isOwner(customerId);
+        allow read: if true;  // Public can view
+        allow write: if isOwner(customerId);  // Only admin can edit
       }
 
       // Audio subcollection
       match /audio/{audioId} {
-        allow read, write: if isOwner(customerId);
+        allow read: if true;  // Public can view
+        allow write: if isOwner(customerId);  // Only admin can edit
       }
 
       // Screenshots subcollection
       match /screenshots/{screenshotId} {
-        allow read, write: if isOwner(customerId);
+        allow read: if true;  // Public can view
+        allow write: if isOwner(customerId);  // Only admin can edit
       }
-    }
-
-    // Public pages - anyone can read (for displaying landing pages)
-    // But only authenticated users can read their own data
-    match /public/{customerId} {
-      allow read: if true;  // Public pages visible to all
-      allow write: if isOwner(customerId);  // Only owner can update
     }
 
     // Deny all other access

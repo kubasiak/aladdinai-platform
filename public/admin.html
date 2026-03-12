@@ -188,18 +188,19 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="loginModal" class="login-modal">
-        <div class="login-content">
-            <h2>🔐 Admin Authentication</h2>
-            <form id="loginForm">
-                <input type="password" id="adminPassword" placeholder="Enter admin password" required>
-                <button type="submit">Login</button>
-            </form>
-            <p class="login-hint">Default password: admin123</p>
-        </div>
-    </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
-    <script src="assets/js/admin-live.js"></script>
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Firebase Storage Abstraction -->
+    <script src="assets/js/firebase-storage.js"></script>
+
+    <!-- Admin Application (Firebase-enabled) -->
+    <script src="assets/js/admin-firebase.js"></script>
 </body>
 </html>

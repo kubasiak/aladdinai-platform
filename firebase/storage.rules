@@ -14,8 +14,10 @@ service firebase.storage {
 
     // Customer media files
     match /customers/{customerId}/{allPaths=**} {
-      // Allow read/write only to the owning customer
-      allow read, write: if isOwner(customerId);
+      // PUBLIC READ: Anyone can view media (for public landing pages)
+      // ADMIN WRITE: Only owner can upload/edit
+      allow read: if true;  // Public can view
+      allow write: if isOwner(customerId);  // Only admin can edit
     }
 
     // Public assets (if needed)
