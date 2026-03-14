@@ -1279,3 +1279,11 @@ async function loadSavedSettings() {
         publicUrlPreview.textContent = slugText ? `https://ai-webpages.web.app/${slugText}` : 'https://ai-webpages.web.app/';
     }
 }
+
+// Logout function
+async function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        await auth.signOut();
+        window.location.href = 'login.html';
+    }
+}
