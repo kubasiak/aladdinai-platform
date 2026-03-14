@@ -11,11 +11,11 @@
     ],
     "rewrites": [
       {
-        "source": "/:slug",
+        "source": "/",
         "function": "servePage"
       },
       {
-        "source": "/",
+        "source": "/:slug",
         "function": "servePage"
       }
     ],

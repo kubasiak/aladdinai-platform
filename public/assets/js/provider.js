@@ -393,10 +393,10 @@ function renderCustomersTable() {
             : customer.templateType;
 
         return `
-            <tr>
+            <tr data-customer-id="${customer.id}">
                 <td><code style="font-size: 11px;">${customer.id}</code></td>
-                <td>${customer.email}</td>
-                <td>${pageLink}</td>
+                <td contenteditable="true" data-field="email" style="cursor: text; background: rgba(102, 126, 234, 0.05);">${customer.email}</td>
+                <td contenteditable="true" data-field="slug" style="cursor: text; background: rgba(102, 126, 234, 0.05);">${customer.slug}</td>
                 <td>${templateDisplay}</td>
                 <td>${usageMB} MB / ${limitMB} MB<br><small style="color: #999;">${customer.usage.fileCount} files (${customer.usage.videos}v, ${customer.usage.audio}a, ${customer.usage.screenshots}s)</small></td>
                 <td>
@@ -407,6 +407,9 @@ function renderCustomersTable() {
                 </td>
                 <td>${statusBadge}</td>
                 <td>
+                    <button onclick="saveCustomerEdits('${customer.id}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;" title="Save changes">
+                        💾 Save
+                    </button>
                     <button onclick="deleteCustomerPage('${customer.id}', '${customer.slug}')" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;" title="Delete page (keep account & media)">
                         📄 Delete Page
                     </button>
@@ -417,6 +420,54 @@ function renderCustomersTable() {
             </tr>
         `;
     }).join('');
+}
+
+// Save customer edits from table
+async function saveCustomerEdits(customerId) {
+    try {
+        // Get the row for this customer
+        const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+        if (!row) {
+            alert('❌ Error: Customer row not found');
+            return;
+        }
+
+        // Get edited values
+        const emailCell = row.querySelector('[data-field="email"]');
+        const slugCell = row.querySelector('[data-field="slug"]');
+
+        const newEmail = emailCell.textContent.trim();
+        const newSlug = slugCell.textContent.trim();
+
+        // Validate
+        if (!newEmail) {
+            alert('❌ Email cannot be empty');
+            return;
+        }
+
+        // Allow empty slug (will default to 'not-set')
+        const finalSlug = newSlug || 'not-set';
+
+        // Update Firestore
+        await db.collection('customers').doc(customerId).set({
+            email: newEmail,
+            slug: finalSlug
+        }, { merge: true });
+
+        // Update local data
+        const customer = allCustomers.find(c => c.id === customerId);
+        if (customer) {
+            customer.email = newEmail;
+            customer.slug = finalSlug;
+        }
+
+        alert('✅ Customer information updated successfully!');
+        console.log(`💾 Updated customer ${customerId}: email=${newEmail}, slug=${finalSlug}`);
+
+    } catch (error) {
+        console.error('Error saving customer edits:', error);
+        alert('❌ Error saving changes: ' + error.message);
+    }
 }
 
 // Create new customer account
@@ -459,7 +510,7 @@ async function createNewCustomer() {
 
         // Save customer metadata to Firestore
         await db.collection('customers').doc(uid).set({
-            email: emailInput, // Store original input (username or email)
+            email: email, // Store full email address
             displayName: displayName || emailInput,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: PROVIDER_EMAIL
@@ -635,10 +686,10 @@ async function deleteCustomer(customerId, customerEmail) {
 async function logout() {
     try {
         await auth.signOut();
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
     } catch (error) {
         console.error('Error signing out:', error);
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
     }
 }
 

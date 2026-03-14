@@ -170,6 +170,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Populate media dropdowns
 // Initialize admin controls
 async function initializeAdmin() {
+    // Initialize video cache
+    await VideoCache.init();
+
+    // Clear old cached videos (older than 7 days)
+    VideoCache.clearOld().catch(err => console.warn('Failed to clear old cache:', err));
+
     // Get current settings
     const settings = await FirebaseMediaStorage.getSettings();
 
@@ -1026,60 +1032,154 @@ window.deleteVideoFromLibrary = async function(index) {
 
 // Generate screenshot from video
 window.generateScreenshotFromVideo = async function(index) {
+    let videoEl = null;
+    let objectURL = null;
     try {
         const video = mediaLibrary.videos[index];
-        showProgress('Generating screenshot from video...', 10);
+        console.log('🎬 Generating screenshot from:', video.name, 'URL:', video.url);
+
+        // Check cache first
+        showProgress('Checking cache...', 5);
+        let blob = await VideoCache.get(video.url);
+
+        if (blob) {
+            console.log('✅ Video found in cache! Size:', blob.size, 'bytes');
+            showProgress('Using cached video...', 20);
+        } else {
+            // Download video as blob to bypass CORS
+            showProgress('Downloading video...', 10);
+            console.log('📥 Downloading video from Firebase...');
+            const response = await fetch(video.url);
+            if (!response.ok) {
+                throw new Error(`Failed to download video: ${response.status} ${response.statusText}`);
+            }
+            blob = await response.blob();
+            console.log('✅ Video downloaded, size:', blob.size, 'bytes');
+
+            // Cache the video for next time
+            showProgress('Caching video...', 18);
+            await VideoCache.set(video.url, blob);
+            console.log('💾 Video cached for future use');
+        }
+
+        // Create object URL (same-origin, no CORS issues)
+        objectURL = URL.createObjectURL(blob);
+        console.log('✅ Object URL created:', objectURL);
+
+        showProgress('Loading video...', 30);
 
         // Create hidden video element
-        const videoEl = document.createElement('video');
-        videoEl.crossOrigin = 'anonymous';
-        videoEl.src = video.url;
+        videoEl = document.createElement('video');
+        videoEl.muted = true; // Mute for autoplay
+        videoEl.playsInline = true;
+        videoEl.src = objectURL; // Use object URL instead of Firebase URL
         videoEl.style.display = 'none';
         document.body.appendChild(videoEl);
 
+        console.log('⏳ Waiting for video to load...');
+
         // Wait for video to load
         await new Promise((resolve, reject) => {
-            videoEl.addEventListener('loadeddata', resolve);
-            videoEl.addEventListener('error', reject);
+            const timeout = setTimeout(() => {
+                reject(new Error('Video load timeout after 30 seconds'));
+            }, 30000);
+
+            videoEl.addEventListener('loadedmetadata', () => {
+                console.log('✅ Video metadata loaded. Duration:', videoEl.duration, 'Size:', videoEl.videoWidth, 'x', videoEl.videoHeight);
+                clearTimeout(timeout);
+                resolve();
+            }, { once: true });
+
+            videoEl.addEventListener('error', (e) => {
+                console.error('❌ Video error event:', e);
+                clearTimeout(timeout);
+                reject(new Error('Video failed to load: ' + (videoEl.error ? videoEl.error.message : 'Unknown error')));
+            }, { once: true });
         });
 
-        showProgress('Capturing frame...', 30);
+        showProgress('Preparing video...', 40);
+
+        // Play video (required by some browsers before seeking)
+        try {
+            await videoEl.play();
+            console.log('▶️ Video playing');
+        } catch (playError) {
+            console.warn('⚠️ Video play failed (may not be needed):', playError);
+        }
 
         // Seek to 1 second (or middle of video)
-        videoEl.currentTime = Math.min(1, videoEl.duration / 2);
-        await new Promise(resolve => {
-            videoEl.addEventListener('seeked', resolve, { once: true });
+        const seekTime = Math.min(1, videoEl.duration / 2);
+        console.log('⏩ Seeking to', seekTime, 'seconds');
+        videoEl.currentTime = seekTime;
+
+        await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Seek timeout after 10 seconds'));
+            }, 10000);
+
+            videoEl.addEventListener('seeked', () => {
+                console.log('✅ Seeked to', videoEl.currentTime);
+                clearTimeout(timeout);
+                resolve();
+            }, { once: true });
         });
 
-        showProgress('Creating image...', 50);
+        // Pause video
+        videoEl.pause();
+
+        showProgress('Capturing frame...', 50);
 
         // Create canvas and capture frame
         const canvas = document.createElement('canvas');
         canvas.width = videoEl.videoWidth;
         canvas.height = videoEl.videoHeight;
+        console.log('🎨 Canvas size:', canvas.width, 'x', canvas.height);
+
         const ctx = canvas.getContext('2d');
         ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-        // Clean up video element
+        // Clean up video element and object URL
         document.body.removeChild(videoEl);
+        if (objectURL) {
+            URL.revokeObjectURL(objectURL);
+            console.log('🧹 Object URL cleaned up');
+        }
+        videoEl = null;
 
-        showProgress('Uploading screenshot...', 70);
+        showProgress('Converting to image...', 60);
 
         // Convert canvas to blob
-        const blob = await new Promise(resolve => {
-            canvas.toBlob(resolve, 'image/jpeg', 0.9);
+        const blob = await new Promise((resolve, reject) => {
+            canvas.toBlob((b) => {
+                if (b) {
+                    console.log('✅ Screenshot blob created, size:', b.size, 'bytes');
+                    resolve(b);
+                } else {
+                    reject(new Error('Failed to create blob from canvas'));
+                }
+            }, 'image/jpeg', 0.9);
         });
+
+        showProgress('Uploading screenshot...', 70);
 
         // Generate filename
         const screenshotName = `screenshot_${video.name.replace(/\.[^.]+$/, '')}_${Date.now()}.jpg`;
         const storageRef = storage.ref(`customers/${customerId}/screenshots/${Date.now()}`);
 
+        console.log('☁️ Uploading to Firebase Storage...');
+
         // Upload to Storage
         const snapshot = await storageRef.put(blob, {
-            contentType: 'image/jpeg'
+            contentType: 'image/jpeg',
+            customMetadata: {
+                originalVideo: video.name
+            }
         });
 
         const downloadURL = await snapshot.ref.getDownloadURL();
+        console.log('✅ Uploaded to:', downloadURL);
+
+        showProgress('Saving to database...', 85);
 
         // Save to Firestore
         await db.collection('customers').doc(customerId)
@@ -1088,7 +1188,7 @@ window.generateScreenshotFromVideo = async function(index) {
                 url: downloadURL,
                 size: blob.size,
                 videoName: video.name,
-                timestamp: Date.now()
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
         showProgress('Refreshing library...', 90);
@@ -1099,13 +1199,26 @@ window.generateScreenshotFromVideo = async function(index) {
         updateLibraryStats();
 
         showProgress('✅ Screenshot generated!', 100);
-        console.log('✅ Screenshot generated from video:', video.name);
+        console.log('✅ Screenshot generated successfully from video:', video.name);
         setTimeout(hideProgress, 2000);
 
     } catch (error) {
         console.error('❌ Error generating screenshot:', error);
-        showProgress('❌ Failed to generate screenshot', 0);
-        setTimeout(hideProgress, 2000);
+        console.error('Error stack:', error.stack);
+        showProgress('❌ Error: ' + error.message, 0);
+
+        // Clean up video element if it exists
+        if (videoEl && videoEl.parentNode) {
+            document.body.removeChild(videoEl);
+        }
+
+        // Clean up object URL if it exists
+        if (objectURL) {
+            URL.revokeObjectURL(objectURL);
+            console.log('🧹 Object URL cleaned up (error handler)');
+        }
+
+        setTimeout(hideProgress, 3000);
     }
 };
 
