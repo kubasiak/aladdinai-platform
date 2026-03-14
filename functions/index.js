@@ -1,24 +1,25 @@
-const functions = require('firebase-functions');
+const {onRequest} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
 
-// Serve static page from Storage
-exports.servePage = functions.https.onRequest(async (req, res) => {
+// Serve static page from Storage (2nd gen function)
+exports.servePage = onRequest({
+    region: 'us-central1',
+    memory: '256MiB'
+}, async (req, res) => {
     try {
-        // Get slug from URL path
-        const slug = req.path.split('/')[1] || req.query.slug;
+        // Get slug from URL path (empty string for root page)
+        let slug = req.path.split('/').filter(p => p)[0] || '';
 
-        if (!slug) {
-            res.status(400).send('No slug provided');
-            return;
-        }
+        // Use 'index' as filename for root page
+        const filename = slug === '' ? 'index' : slug;
 
-        console.log('Serving page for slug:', slug);
+        console.log('Serving page for slug:', slug || '(root)', 'filename:', filename);
 
         // Get HTML from Storage
         const bucket = admin.storage().bucket();
-        const file = bucket.file(`public-pages/${slug}.html`);
+        const file = bucket.file(`public-pages/${filename}.html`);
 
         // Check if file exists
         const [exists] = await file.exists();

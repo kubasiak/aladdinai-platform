@@ -11,8 +11,12 @@
     ],
     "rewrites": [
       {
-        "source": "/:slug",
-        "destination": "/index.html"
+        "source": "/",
+        "function": "servePage"
+      },
+      {
+        "source": "/:slug([a-zA-Z0-9-]+)",
+        "function": "servePage"
       }
     ],
     "headers": [

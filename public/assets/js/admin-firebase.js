@@ -960,7 +960,7 @@ function applyVideoSpeed(speed) {
 
 // Save all settings to Firestore
 // Generate static HTML for public page
-function generateStaticHTML(settings, customerId) {
+async function generateStaticHTML(settings, customerId) {
     const baseUrl = 'https://ai-webpages.web.app';
 
     // Get video and audio URLs
@@ -972,10 +972,14 @@ function generateStaticHTML(settings, customerId) {
         const video = mediaLibrary.videos.find(v => v.id === settings.selectedVideoId);
         if (video && video.url) {
             videoUrl = video.url;
-            // Find matching screenshot for poster
-            const screenshot = mediaLibrary.screenshots.find(s => s.videoName === video.name);
-            if (screenshot && screenshot.url) {
-                posterUrl = screenshot.url;
+            // Use card background as poster (or find matching screenshot)
+            if (settings.cardBackground) {
+                posterUrl = settings.cardBackground;
+            } else {
+                const screenshot = mediaLibrary.screenshots.find(s => s.videoName === video.name);
+                if (screenshot && screenshot.url) {
+                    posterUrl = screenshot.url;
+                }
             }
         }
     }
@@ -987,6 +991,9 @@ function generateStaticHTML(settings, customerId) {
         }
     }
 
+    // Inline CSS for instant rendering (no external file load)
+    const inlineCSS = await fetch('/assets/css/styles.css').then(r => r.text()).catch(() => '');
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -994,7 +1001,9 @@ function generateStaticHTML(settings, customerId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${settings.companyName} - ${settings.tagline}">
     <title>${settings.companyName}</title>
-    <link rel="stylesheet" href="${baseUrl}/assets/css/styles.css">
+    <style>
+        ${inlineCSS}
+    </style>
     <style>
         .logo h1 { font-size: ${settings.titleSize}rem !important; }
         .about-text { font-size: ${settings.bodySize}rem !important; }
@@ -1127,7 +1136,7 @@ async function saveAllSettings() {
 
         // Generate and save static HTML
         saveBtn.textContent = '📄 Generating static page...';
-        const staticHTML = generateStaticHTML(settings, customerId);
+        const staticHTML = await generateStaticHTML(settings, customerId);
         // Use 'index' for root page (empty slug), otherwise use the slug value
         const pageSlug = settings.slug === '' ? 'index' : settings.slug;
         const storageRef = storage.ref(`public-pages/${pageSlug}.html`);
