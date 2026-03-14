@@ -152,11 +152,20 @@
         const errorMessage = document.getElementById('errorMessage');
         const loading = document.getElementById('loading');
 
+        // Provider email (must match provider.js)
+        const PROVIDER_EMAIL = 'kubasiak.anna@gmail.com';
+
         // Check if already logged in
         auth.onAuthStateChanged(user => {
             if (user) {
-                // Already logged in, redirect to admin
-                window.location.href = '/admin.html';
+                // Check if provider account
+                if (user.email === PROVIDER_EMAIL) {
+                    console.log('Provider login detected, redirecting to provider panel...');
+                    window.location.href = '/provider.html';
+                } else {
+                    // Regular user, redirect to admin
+                    window.location.href = '/admin.html';
+                }
             }
         });
 

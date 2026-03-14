@@ -335,7 +335,7 @@ function renderCustomersTable() {
     if (allCustomers.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
                     No customers found
                 </td>
             </tr>
@@ -380,6 +380,11 @@ function renderCustomersTable() {
                 </td>
                 <td>${statusBadge}</td>
                 <td class="cost-indicator">${costIndicator}</td>
+                <td>
+                    <button onclick="deleteCustomer('${customer.id}', '${customer.email}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        🗑️ Delete
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -459,6 +464,84 @@ async function createNewCustomer() {
         }
 
         statusDiv.innerHTML = `<p style="color: #dc3545;">❌ ${errorMessage}</p>`;
+    }
+}
+
+// Delete customer account and all data
+async function deleteCustomer(customerId, customerEmail) {
+    // Confirm deletion
+    const confirmed = confirm(
+        `⚠️ WARNING: Delete customer account?\n\n` +
+        `Email: ${customerEmail}\n` +
+        `ID: ${customerId}\n\n` +
+        `This will permanently delete:\n` +
+        `• Customer account\n` +
+        `• All media files (videos, audio, screenshots)\n` +
+        `• All settings\n` +
+        `• Public page\n\n` +
+        `This action CANNOT be undone!\n\n` +
+        `Type the customer's email to confirm.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    // Double confirmation - ask for email
+    const emailConfirm = prompt(`Type "${customerEmail}" to confirm deletion:`);
+    if (emailConfirm !== customerEmail) {
+        alert('❌ Email does not match. Deletion cancelled.');
+        return;
+    }
+
+    try {
+        console.log(`🗑️ Deleting customer: ${customerId} (${customerEmail})`);
+
+        // Delete all media files from Storage
+        const mediaTypes = ['videos', 'audio', 'screenshots'];
+        for (const mediaType of mediaTypes) {
+            try {
+                const mediaRef = storage.ref(`customers/${customerId}/${mediaType}`);
+                const listResult = await mediaRef.listAll();
+
+                // Delete all files in this folder
+                for (const item of listResult.items) {
+                    await item.delete();
+                    console.log(`  ✓ Deleted ${mediaType}: ${item.name}`);
+                }
+            } catch (error) {
+                console.warn(`  ⚠️ Error deleting ${mediaType}:`, error.message);
+            }
+        }
+
+        // Delete static page from Storage
+        try {
+            const customerDoc = await db.collection('customers').doc(customerId).get();
+            if (customerDoc.exists && customerDoc.data().slug) {
+                const slug = customerDoc.data().slug;
+                const pageRef = storage.ref(`public-pages/${slug}.html`);
+                await pageRef.delete();
+                console.log(`  ✓ Deleted public page: ${slug}.html`);
+            }
+        } catch (error) {
+            console.warn('  ⚠️ Error deleting public page:', error.message);
+        }
+
+        // Delete Firestore document
+        await db.collection('customers').doc(customerId).delete();
+        console.log(`  ✓ Deleted Firestore document`);
+
+        // Note: Cannot delete Firebase Auth user from client-side
+        // Would need to use Firebase Admin SDK on backend or user would need to delete their own account
+
+        alert(`✅ Customer deleted successfully!\n\nEmail: ${customerEmail}\n\nNote: The user's login credentials remain active. They can create a new account with the same email.`);
+
+        // Reload dashboard
+        await loadDashboard();
+
+    } catch (error) {
+        console.error('❌ Error deleting customer:', error);
+        alert(`Error deleting customer: ${error.message}`);
     }
 }
 
