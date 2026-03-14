@@ -1120,25 +1120,43 @@ async function saveAllSettings() {
     const slugInput = document.getElementById('slugInput');
     const slug = slugInput ? slugInput.value.trim() : '';
 
+    // Get template type from existing settings
+    const templateType = existingSettings.templateType || 'classic';
+
+    // Build template-specific settings for Classic template
+    const classicSettings = {
+        hero: {
+            companyName: document.querySelector('[data-field="companyName"]').textContent,
+            tagline: document.querySelector('[data-field="tagline"]').textContent
+        },
+        about: {
+            title: document.querySelector('[data-field="aboutTitle"]').textContent,
+            text1: document.querySelector('[data-field="aboutText1"]').textContent,
+            text2: document.querySelector('[data-field="aboutText2"]').textContent
+        },
+        contact: {
+            email: document.querySelector('[data-field="contactEmail"]').textContent,
+            phone: document.querySelector('[data-field="contactPhone"]').textContent,
+            address: document.querySelector('[data-field="contactAddress"]').innerHTML
+        },
+        styling: {
+            titleSize: parseFloat(document.getElementById('titleSizeSlider').value),
+            bodySize: parseFloat(document.getElementById('bodySizeSlider').value),
+            fontColor: document.getElementById('fontColorPicker').value,
+            minTransparency: parseInt(document.getElementById('minTransparencySlider').value),
+            maxTransparency: parseInt(document.getElementById('maxTransparencySlider').value),
+            animDuration: parseFloat(document.getElementById('animSpeedSlider').value),
+            videoSpeed: parseInt(document.getElementById('videoSpeedSlider').value)
+        }
+    };
+
+    // Build new settings structure
     const settings = {
-        ...existingSettings, // Preserve existing settings
-        companyName: document.querySelector('[data-field="companyName"]').textContent,
-        tagline: document.querySelector('[data-field="tagline"]').textContent,
-        aboutTitle: document.querySelector('[data-field="aboutTitle"]').textContent,
-        aboutText1: document.querySelector('[data-field="aboutText1"]').textContent,
-        aboutText2: document.querySelector('[data-field="aboutText2"]').textContent,
-        contactEmail: document.querySelector('[data-field="contactEmail"]').textContent,
-        contactPhone: document.querySelector('[data-field="contactPhone"]').textContent,
-        contactAddress: document.querySelector('[data-field="contactAddress"]').innerHTML,
-        titleSize: parseFloat(document.getElementById('titleSizeSlider').value),
-        bodySize: parseFloat(document.getElementById('bodySizeSlider').value),
-        fontColor: document.getElementById('fontColorPicker').value,
-        minTransparency: parseInt(document.getElementById('minTransparencySlider').value),
-        maxTransparency: parseInt(document.getElementById('maxTransparencySlider').value),
-        animDuration: parseFloat(document.getElementById('animSpeedSlider').value),
-        videoSpeed: parseInt(document.getElementById('videoSpeedSlider').value),
+        ...existingSettings, // Preserve template type, selected media IDs, etc.
+        templateType: templateType,
+        slug: slug,
         cardBackground: cardBackground,
-        slug: slug // Empty string is valid for root page
+        [templateType]: classicSettings // Save template-specific settings
     };
 
     try {
