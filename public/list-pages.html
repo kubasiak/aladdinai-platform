@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Customer Pages - AladdinAI Platform</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            margin: 0 0 30px 0;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 18px;
+            padding: 40px;
+        }
+
+        .page-list {
+            display: none;
+        }
+
+        .page-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .page-item h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .page-item .url {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .page-item .url:hover {
+            text-decoration: underline;
+        }
+
+        .page-item .meta {
+            margin-top: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .back-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 All Customer Pages</h1>
+
+        <div id="loading" class="loading">Loading pages...</div>
+
+        <div id="pageList" class="page-list">
+            <div class="count">Total: <span id="count">0</span> page(s)</div>
+            <div id="pages"></div>
+        </div>
+
+        <a href="/provider.html" class="back-btn">← Back to Dashboard</a>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="/firebase-config.js"></script>
+
+    <script>
+        async function loadPages() {
+            try {
+                const snapshot = await db.collection('customers').get();
+
+                const pages = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const slug = data.slug || data.settings?.slug;
+                    const email = data.email || 'Unknown';
+                    const templateType = data.settings?.templateType || data.templateType || 'none';
+
+                    if (slug && slug !== 'not-set') {
+                        const url = `https://ai-webpages.web.app/${slug}`;
+                        pages.push({
+                            email,
+                            slug,
+                            url,
+                            templateType,
+                            id: doc.id
+                        });
+                    }
+                });
+
+                // Sort by slug
+                pages.sort((a, b) => a.slug.localeCompare(b.slug));
+
+                // Display
+                const pagesDiv = document.getElementById('pages');
+                const countSpan = document.getElementById('count');
+
+                if (pages.length === 0) {
+                    pagesDiv.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No pages found with configured slugs.</p>';
+                } else {
+                    pagesDiv.innerHTML = pages.map((page, index) => `
+                        <div class="page-item">
+                            <h3>${index + 1}. ${page.email}</h3>
+                            <a href="${page.url}" target="_blank" class="url">${page.url}</a>
+                            <div class="meta">
+                                Template: ${page.templateType === 'classic' ? '💎 Classic' : page.templateType === 'aimachine' ? '🤖 AImachine' : page.templateType}
+                                | Customer ID: <code>${page.id}</code>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    countSpan.textContent = pages.length;
+                }
+
+                // Show results
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('pageList').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading pages:', error);
+                document.getElementById('loading').innerHTML = '❌ Error loading pages: ' + error.message;
+            }
+        }
+
+        // Load on page load
+        loadPages();
+    </script>
+</body>
+</html>
