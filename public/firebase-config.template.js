@@ -1,20 +1,20 @@
-// Firebase Configuration
-// Replace with your actual Firebase project credentials
+// Firebase Configuration Template
+// Copy this file to firebase-config.js and replace with your actual Firebase project credentials
 
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Firebase services
-const auth = firebase.auth();
+// Firebase services (conditionally initialize auth if available)
+const auth = firebase.auth ? firebase.auth() : null;
 const db = firebase.firestore();
 const storage = firebase.storage();
 

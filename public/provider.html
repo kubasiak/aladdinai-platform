@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AladdinAI - Provider Dashboard</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .provider-dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .dashboard-header h1 {
+            margin: 0;
+            color: #667eea;
+            font-size: 2rem;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .stat-card .stat-subtext {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .limits-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group small {
+            margin-top: 5px;
+            color: #777;
+        }
+
+        .save-limits-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .save-limits-btn:hover {
+            background: #218838;
+        }
+
+        .customers-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .customers-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .customers-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .customers-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .usage-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .usage-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s;
+        }
+
+        .usage-bar-fill.warning {
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+
+        .usage-bar-fill.danger {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+
+        .usage-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .cost-indicator {
+            font-weight: 600;
+        }
+
+        .cost-free {
+            color: #28a745;
+        }
+
+        .cost-paid {
+            color: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="provider-dashboard">
+        <div class="dashboard-header">
+            <h1>🎯 Provider Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        </div>
+
+        <div id="loadingIndicator" class="loading">
+            Loading dashboard...
+        </div>
+
+        <div id="dashboardContent" style="display: none;">
+            <!-- Platform Stats -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be populated by JS -->
+            </div>
+
+            <!-- Global Limits Configuration -->
+            <div class="section">
+                <h2>⚙️ Storage Limits Configuration</h2>
+                <div class="limits-form">
+                    <div class="form-group">
+                        <label>Max File Size (MB)</label>
+                        <input type="number" id="maxFileSize" value="50" min="1" max="100">
+                        <small>Maximum size for individual files</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Storage Per Customer (MB)</label>
+                        <input type="number" id="storagePerCustomer" value="500" min="100" max="5000">
+                        <small>Total storage limit per customer</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Video File Size Limit (MB)</label>
+                        <input type="number" id="maxVideoSize" value="50" min="5" max="100">
+                        <small>Max size for video uploads</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Audio File Size Limit (MB)</label>
+                        <input type="number" id="maxAudioSize" value="20" min="5" max="50">
+                        <small>Max size for audio uploads</small>
+                    </div>
+                </div>
+                <button class="save-limits-btn" onclick="saveLimits()">💾 Save Storage Limits</button>
+            </div>
+
+            <!-- Bandwidth Limits Configuration -->
+            <div class="section">
+                <h2>🌐 Bandwidth Limits Configuration</h2>
+                <div class="limits-form">
+                    <div class="form-group">
+                        <label>Hourly Threshold (MB/hour)</label>
+                        <input type="number" id="hourlyThreshold" value="500" min="100" max="5000">
+                        <small>Switch to images when hourly bandwidth exceeds this (resets every hour)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Daily Threshold (MB/day)</label>
+                        <input type="number" id="dailyThreshold" value="5000" min="1000" max="100000">
+                        <small>Switch to images when daily bandwidth exceeds this (resets at midnight)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>MB Per Page View (Estimation Factor)</label>
+                        <input type="number" id="mbPerView" value="10" min="5" max="50">
+                        <small>Average bandwidth per page view (calibrate based on actual usage)</small>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="forceImageMode" style="width: auto;">
+                            <span>Force Image Mode (Emergency Switch)</span>
+                        </label>
+                        <small>Disables all videos globally - Use in emergency only</small>
+                    </div>
+                </div>
+                <button class="save-limits-btn" onclick="saveBandwidthLimits()">💾 Save Bandwidth Limits</button>
+            </div>
+
+            <!-- Create New Customer -->
+            <div class="section">
+                <h2>➕ Create New Customer</h2>
+                <div class="limits-form">
+                    <div class="form-group">
+                        <label>Customer Email/Username</label>
+                        <input type="text" id="newCustomerEmail" placeholder="customer@example.com or username">
+                        <small>Email address or username (e.g., "demo1", "acme-corp")</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="newCustomerPassword" placeholder="Temporary password">
+                        <small>Customer can change this after first login</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Display Name (Optional)</label>
+                        <input type="text" id="newCustomerName" placeholder="Company Name">
+                        <small>Business or company name for reference</small>
+                    </div>
+                    <button class="save-limits-btn" onclick="createNewCustomer()">
+                        ➕ Create Customer Account
+                    </button>
+                    <div id="createCustomerStatus" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- Customers Overview -->
+            <div class="section">
+                <h2>👥 Customer Usage Overview</h2>
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Email</th>
+                            <th>Storage Used</th>
+                            <th>Usage</th>
+                            <th>Status</th>
+                            <th>Est. Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                                Loading customer data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Provider Dashboard Logic -->
+    <script src="assets/js/provider.js"></script>
+</body>
+</html>

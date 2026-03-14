@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup Customer Accounts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #667eea; margin-top: 0; }
+        .status { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Setup Customer Accounts</h1>
+        <p>Click the button below to create the two test customer accounts:</p>
+        
+        <button id="setupBtn" onclick="setupAccounts()">Create Customer Accounts</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const setupBtn = document.getElementById('setupBtn');
+
+        async function setupAccounts() {
+            setupBtn.disabled = true;
+            statusDiv.innerHTML = '<p>⏳ Creating accounts...</p>';
+
+            const customers = [
+                { 
+                    email: 'rafal@packingmaster.com', 
+                    password: 'admin123',
+                    displayName: 'Packing Master'
+                },
+                { 
+                    email: 'admin@aladdinai.com', 
+                    password: 'admin123',
+                    displayName: 'AladdinAI Admin'
+                }
+            ];
+
+            let results = '';
+
+            for (const customer of customers) {
+                try {
+                    statusDiv.innerHTML += `<p>Creating ${customer.email}...</p>`;
+                    
+                    const userCredential = await auth.createUserWithEmailAndPassword(
+                        customer.email, 
+                        customer.password
+                    );
+                    
+                    const uid = userCredential.user.uid;
+
+                    // Save customer metadata to Firestore
+                    await db.collection('customers').doc(uid).set({
+                        email: customer.email,
+                        displayName: customer.displayName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        createdBy: 'setup-script'
+                    });
+
+                    results += `
+                        <div style="margin: 15px 0; padding: 15px; background: #d4edda; border-radius: 5px;">
+                            <strong>✅ ${customer.displayName}</strong><br>
+                            Email: ${customer.email}<br>
+                            Password: ${customer.password}<br>
+                            UID: ${uid}<br>
+                            <a href="/?customer=${uid}" target="_blank">View Page</a> | 
+                            <a href="/login.html" target="_blank">Login</a>
+                        </div>
+                    `;
+                    
+                    // Sign out after creating
+                    await auth.signOut();
+                    
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        results += `<p style="color: orange;">⚠️ ${customer.email} already exists</p>`;
+                    } else {
+                        results += `<p style="color: red;">❌ Error creating ${customer.email}: ${error.message}</p>`;
+                    }
+                }
+            }
+            
+            statusDiv.innerHTML = '<h3>✅ Setup Complete!</h3>' + results;
+            statusDiv.className = 'status success';
+        }
+    </script>
+</body>
+</html>

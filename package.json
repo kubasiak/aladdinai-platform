@@ -1,0 +1,28 @@
+{
+  "name": "aladdinai-platform",
+  "version": "1.0.0",
+  "description": "Production-ready landing page platform with backend for customer self-service customization.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubasiak/aladdinai-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kubasiak/aladdinai-platform/issues"
+  },
+  "homepage": "https://github.com/kubasiak/aladdinai-platform#readme",
+  "dependencies": {
+    "playwright": "^1.58.2",
+    "ws": "^8.19.0"
+  }
+}

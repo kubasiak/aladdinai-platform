@@ -12,7 +12,10 @@
     <!-- Admin Control Panel -->
     <div class="admin-controls" id="adminControls">
         <div class="controls-header">
-            <h3>Admin Controls</h3>
+            <div>
+                <h3>Admin Controls</h3>
+                <small id="userInfo" style="color: #999; font-size: 0.8rem;">Loading...</small>
+            </div>
             <button id="toggleControls" class="btn-toggle">◀</button>
         </div>
 
@@ -53,26 +56,19 @@
                 </label>
             </div>
 
-            <div class="control-section">
-                <h4>Media Selection</h4>
-                <div class="upload-limits">
-                    <small>📊 Limits: Video ≤15MB (MP4), Audio ≤10MB (MP3/OGG)</small>
+            <div class="control-section" style="background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3);">
+                <h4>🌐 Your Public URL</h4>
+                <label>
+                    URL Slug:
+                    <input type="text" id="slugInput" placeholder="my-company" style="width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ddd;">
+                </label>
+                <div id="publicUrlPreview" style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: 0.9rem; word-break: break-all;">
+                    https://ai-webpages.web.app/your-slug
                 </div>
-                <label>
-                    Background Video:
-                    <select id="videoSelect" class="media-select">
-                        <option value="">Loading...</option>
-                    </select>
-                    <input type="file" id="videoUpload" accept="video/mp4,video/webm" style="display: none;">
-                </label>
-                <label>
-                    Background Audio:
-                    <select id="audioSelect" class="media-select">
-                        <option value="">Loading...</option>
-                    </select>
-                    <input type="file" id="audioUpload" accept="audio/mp3,audio/mpeg,audio/ogg,audio/wav" style="display: none;">
-                </label>
             </div>
+
+            <input type="file" id="videoUpload" accept="video/mp4,video/webm" style="display: none;">
+            <input type="file" id="audioUpload" accept="audio/mp3,audio/mpeg,audio/ogg,audio/wav" style="display: none;">
 
             <div class="control-section">
                 <h4>🖼️ Card Background</h4>
@@ -91,22 +87,28 @@
                 <div class="library-stats">
                     <small>Total Size: <span id="librarySize">1.1 MB</span> / 20 MB</small>
                 </div>
+                <div id="progressContainer" style="display: none; margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                    <div id="progressText" style="font-size: 0.9rem; margin-bottom: 5px;"></div>
+                    <div style="width: 100%; height: 20px; background: #ddd; border-radius: 10px; overflow: hidden;">
+                        <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s;"></div>
+                    </div>
+                </div>
                 <div class="media-library">
                     <div class="library-category">
-                        <h5>Videos</h5>
+                        <h5>🎬 Videos <button onclick="triggerVideoUpload()" style="float: right; background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;" title="Upload Video">📤 Upload</button></h5>
                         <div id="videoLibrary" class="library-items">
                             <!-- Video items will be added here -->
                         </div>
                     </div>
                     <div class="library-category">
-                        <h5>Audio</h5>
+                        <h5>🎵 Audio <button onclick="triggerAudioUpload()" style="float: right; background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;" title="Upload Audio">📤 Upload</button></h5>
                         <div id="audioLibrary" class="library-items">
                             <!-- Audio items will be added here -->
                         </div>
                     </div>
                 </div>
                 <div class="upload-note">
-                    <small>💡 Tip: Use <a href="https://www.freeconvert.com/video-compressor" target="_blank">online compressor</a> to optimize files for web</small>
+                    <small>💡 Limits: Video ≤15MB, Audio ≤10MB | <a href="https://www.freeconvert.com/video-compressor" target="_blank">Compressor tool</a></small>
                 </div>
             </div>
 
@@ -128,8 +130,8 @@
 
     <!-- Background Video -->
     <div class="video-background">
-        <video autoplay muted loop playsinline id="bgVideo">
-            <source src="assets/media/videos/background-video-slow.mp4" type="video/mp4">
+        <video autoplay muted loop playsinline id="bgVideo" poster="">
+            <!-- Video source loaded from Firestore by admin-firebase.js -->
         </video>
         <div class="video-overlay"></div>
     </div>

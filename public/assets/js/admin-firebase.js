@@ -51,78 +51,9 @@ const MediaStorage = {
     }
 };
 
-// Load media library from IndexedDB
+// Load media library from Firestore
 async function loadMediaLibrary() {
     try {
-        const videos = await MediaStorage.getAll('videos');
-        const audio = await MediaStorage.getAll('audio');
-        const screenshots = await MediaStorage.getAll('screenshots');
-
-        // If empty, add default media (nebula first as default)
-        if (videos.length === 0) {
-            await MediaStorage.saveVideo({
-                name: 'Nebula Space Background',
-                size: 9400000,
-                type: 'video/mp4',
-                data: 'assets/media/videos/vecteezy_moving-nebulas-space.mp4',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-            await MediaStorage.saveVideo({
-                name: 'Background Video - Fast',
-                size: 1200000,
-                type: 'video/mp4',
-                data: 'assets/media/videos/background-video-fast.mp4',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-            await MediaStorage.saveVideo({
-                name: 'Background Video - Part 1',
-                size: 611000,
-                type: 'video/mp4',
-                data: 'assets/media/videos/background-video-part1.mp4',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-        }
-
-        if (audio.length === 0) {
-            await MediaStorage.saveAudio({
-                name: 'Demo Track 1',
-                size: 6600000,
-                type: 'audio/mp3',
-                data: 'assets/media/audio/Demo Track 1.mp3',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-            await MediaStorage.saveAudio({
-                name: 'Demo Track 2',
-                size: 4900000,
-                type: 'audio/mp3',
-                data: 'assets/media/audio/Demo Track 2.mp3',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-        }
-
-        if (screenshots.length === 0) {
-            await MediaStorage.saveScreenshot({
-                name: 'Card Background (Nebula)',
-                data: 'assets/images/card-background-nebula.jpg',
-                videoName: 'Nebula',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-            await MediaStorage.saveScreenshot({
-                name: 'Card Background (Original)',
-                data: 'assets/images/card-background.jpg',
-                videoName: 'Original',
-                timestamp: Date.now(),
-                isDefault: true
-            });
-        }
-
-        // Reload after adding defaults
         return {
             videos: await MediaStorage.getAll('videos'),
             audio: await MediaStorage.getAll('audio'),
@@ -173,6 +104,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         customerId = user.uid;
         console.log('✅ Authenticated as:', user.email, 'Customer ID:', customerId);
 
+        // Display user info in header
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.textContent = `👤 ${user.email}`;
+        }
+
         try {
             // Initialize Firebase storage with customer ID
             await MediaStorage.init();
@@ -188,76 +125,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Populate media dropdowns
-function populateMediaDropdowns() {
-    // Populate video dropdown
-    const videoSelect = document.getElementById('videoSelect');
-    videoSelect.innerHTML = '<option value="">-- Select Video --</option>';
-
-    // Add "None" option
-    const noneVideoOption = document.createElement('option');
-    noneVideoOption.value = 'none';
-    noneVideoOption.textContent = '🚫 None (No background video)';
-    videoSelect.appendChild(noneVideoOption);
-
-    mediaLibrary.videos.forEach((vid, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = `${vid.name} (${(vid.size / 1024 / 1024).toFixed(2)} MB)`;
-        videoSelect.appendChild(option);
-    });
-
-    const browsVideoOption = document.createElement('option');
-    browsVideoOption.value = 'browse';
-    browsVideoOption.textContent = '📂 Browse for new video...';
-    videoSelect.appendChild(browsVideoOption);
-
-    // Populate audio dropdown
-    const audioSelect = document.getElementById('audioSelect');
-    audioSelect.innerHTML = '<option value="">-- Select Audio --</option>';
-
-    // Add "None" option
-    const noneAudioOption = document.createElement('option');
-    noneAudioOption.value = 'none';
-    noneAudioOption.textContent = '🚫 None (No background audio)';
-    audioSelect.appendChild(noneAudioOption);
-
-    if (mediaLibrary.audio.length === 0) {
-        const noAudioOption = document.createElement('option');
-        noAudioOption.value = '';
-        noAudioOption.textContent = 'No audio files';
-        noAudioOption.disabled = true;
-        audioSelect.appendChild(noAudioOption);
-    } else {
-        mediaLibrary.audio.forEach((aud, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = `${aud.name} (${(aud.size / 1024 / 1024).toFixed(2)} MB)`;
-            audioSelect.appendChild(option);
-        });
-    }
-
-    const browsAudioOption = document.createElement('option');
-    browsAudioOption.value = 'browse';
-    browsAudioOption.textContent = '📂 Browse for new audio...';
-    audioSelect.appendChild(browsAudioOption);
-}
-
 // Initialize admin controls
 async function initializeAdmin() {
     await loadSavedSettings();
     setupLiveControls();
     setupEditableFields();
-    populateMediaDropdowns();
     renderMediaLibrary();
     await renderScreenshotLibrary();
     updateLibraryStats();
 
-    // Play video
-    if (video) {
-        video.play().catch(error => console.log('Video autoplay failed:', error));
-    }
-
-    // Auto-play first audio if no audio is selected yet
+    // Load selected video and audio from settings
     let currentSettings;
     try {
         currentSettings = await FirebaseMediaStorage.getSettings();
@@ -265,13 +142,51 @@ async function initializeAdmin() {
         currentSettings = {};
     }
 
-    if (!currentSettings.selectedAudioId && mediaLibrary.audio.length > 0) {
-        useAudio(mediaLibrary.audio[0]);
-        const audioSelect = document.getElementById('audioSelect');
-        audioSelect.value = 0;
-        console.log('🎵 Auto-playing default audio:', mediaLibrary.audio[0].name);
+    // Load selected video if one is saved
+    if (currentSettings.selectedVideoId) {
+        const selectedVideo = mediaLibrary.videos.find(v => v.id === currentSettings.selectedVideoId);
+        if (selectedVideo) {
+            await useVideo(selectedVideo);
+            console.log('▶️ Loaded selected video:', selectedVideo.name);
+        }
+    }
+
+    // Load selected audio if one is saved
+    if (currentSettings.selectedAudioId) {
+        const selectedAudio = mediaLibrary.audio.find(a => a.id === currentSettings.selectedAudioId);
+        if (selectedAudio) {
+            await useAudio(selectedAudio);
+            console.log('🔊 Loaded selected audio:', selectedAudio.name);
+        }
     }
 }
+
+// Progress bar helpers
+function showProgress(text, percent) {
+    const container = document.getElementById('progressContainer');
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+
+    container.style.display = 'block';
+    progressText.textContent = text;
+    progressBar.style.width = percent + '%';
+}
+
+function hideProgress() {
+    const container = document.getElementById('progressContainer');
+    setTimeout(() => {
+        container.style.display = 'none';
+    }, 1000);
+}
+
+// Upload trigger functions
+window.triggerVideoUpload = function() {
+    document.getElementById('videoUpload').click();
+};
+
+window.triggerAudioUpload = function() {
+    document.getElementById('audioUpload').click();
+};
 
 // Setup live controls
 function setupLiveControls() {
@@ -328,62 +243,35 @@ function setupLiveControls() {
         applyFontColor(this.value);
     });
 
-    // Video dropdown
-    const videoSelect = document.getElementById('videoSelect');
-    videoSelect.addEventListener('change', function() {
-        if (this.value === 'browse') {
-            document.getElementById('videoUpload').click();
-            this.selectedIndex = 0; // Reset to first option
-        } else if (this.value === 'none') {
-            // User selected "None" - hide/pause video
-            const video = document.getElementById('bgVideo');
-            if (video) {
-                video.pause();
-                video.style.opacity = '0';
-            }
-            // Save "none" selection
-            updateSetting('selectedVideoId', 'none');
-            console.log('🚫 Video disabled');
-        } else if (this.value) {
-            const index = parseInt(this.value);
-            const video = document.getElementById('bgVideo');
-            if (video) video.style.opacity = '1'; // Show video
-            useVideo(mediaLibrary.videos[index]);
-        }
-    });
+    // Slug input handling
+    const slugInput = document.getElementById('slugInput');
+    const publicUrlPreview = document.getElementById('publicUrlPreview');
+    if (slugInput && publicUrlPreview) {
+        slugInput.addEventListener('input', function() {
+            let slug = slugInput.value
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '');
+            slugInput.value = slug;
+            publicUrlPreview.textContent = `https://ai-webpages.web.app/${slug || 'your-slug'}`;
+        });
+    }
 
-    // Video upload
+    // Video upload handler
     const videoUpload = document.getElementById('videoUpload');
     videoUpload.addEventListener('change', function(e) {
-        handleVideoUpload(e.target.files[0]);
+        if (e.target.files[0]) {
+            handleVideoUpload(e.target.files[0]);
+        }
         this.value = ''; // Reset input
     });
 
-    // Audio dropdown
-    const audioSelect = document.getElementById('audioSelect');
-    audioSelect.addEventListener('change', function() {
-        if (this.value === 'browse') {
-            document.getElementById('audioUpload').click();
-            this.selectedIndex = 0; // Reset to first option
-        } else if (this.value === 'none') {
-            // User selected "None" - stop audio
-            if (backgroundAudio) {
-                backgroundAudio.pause();
-                backgroundAudio = null;
-            }
-            // Save "none" selection
-            updateSetting('selectedAudioId', 'none');
-            console.log('🚫 Audio disabled');
-        } else if (this.value) {
-            const index = parseInt(this.value);
-            useAudio(mediaLibrary.audio[index]);
-        }
-    });
-
-    // Audio upload
+    // Audio upload handler
     const audioUpload = document.getElementById('audioUpload');
     audioUpload.addEventListener('change', function(e) {
-        handleAudioUpload(e.target.files[0]);
+        if (e.target.files[0]) {
+            handleAudioUpload(e.target.files[0]);
+        }
         this.value = ''; // Reset input
     });
 
@@ -414,14 +302,18 @@ function setupLiveControls() {
 
     // Exit button
     document.getElementById('exitBtn').addEventListener('click', async function() {
-        if (confirm('❌ Exit admin mode?')) {
-            try {
-                await auth.signOut();
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error('Error signing out:', error);
-                window.location.href = 'index.html';
-            }
+        try {
+            // Get the slug from settings
+            const settings = await FirebaseMediaStorage.getSettings();
+            const slug = settings.slug || '';
+
+            await auth.signOut();
+            // Redirect to root if slug is empty, otherwise to /{slug}
+            window.location.href = slug === '' ? '/' : `/${slug}`;
+        } catch (error) {
+            console.error('Error signing out:', error);
+            await auth.signOut();
+            window.location.href = '/';
         }
     });
 }
@@ -586,8 +478,12 @@ async function handleVideoUpload(file) {
     const allowedTypes = ['video/mp4', 'video/webm'];
     if (!validateFile(file, MAX_VIDEO_SIZE, allowedTypes)) return;
 
+    showProgress(`Uploading ${file.name}...`, 10);
+
     const reader = new FileReader();
     reader.onload = async function(e) {
+        showProgress(`Processing ${file.name}...`, 30);
+
         const videoData = {
             name: file.name,
             size: file.size,
@@ -597,60 +493,56 @@ async function handleVideoUpload(file) {
         };
 
         try {
-            // Save to IndexedDB
+            showProgress('Saving video...', 50);
             const videoId = await MediaStorage.saveVideo(videoData);
             videoData.id = videoId;
 
-            // Reload library
+            showProgress('Reloading library...', 70);
             mediaLibrary = await loadMediaLibrary();
 
             // Use the video
+            const video = document.getElementById('bgVideo');
+            if (video) video.style.opacity = '1';
             useVideo(videoData);
 
+            showProgress('Generating screenshot...', 80);
             // Generate screenshot
             generateScreenshotFromVideo(videoData, async function(screenshotData) {
                 try {
                     const screenshotObj = {
-                        name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
+                        name: file.name.replace(/\.[^/.]+$/, ''),
                         data: screenshotData,
                         videoName: file.name,
                         timestamp: Date.now()
                     };
 
-                    console.log('💾 Saving screenshot to library...');
                     await MediaStorage.saveScreenshot(screenshotObj);
-
-                    console.log('🔄 Reloading library...');
                     mediaLibrary = await loadMediaLibrary();
-
-                    console.log('🖼️ Rendering screenshot library...');
                     await renderScreenshotLibrary();
-
-                    console.log('✅ Screenshot added to Card Background section');
+                    console.log('✅ Screenshot generated');
                 } catch (error) {
                     console.error('❌ Error saving screenshot:', error);
                 }
             });
 
+            showProgress('Finalizing...', 90);
             renderMediaLibrary();
-            populateMediaDropdowns();
             updateLibraryStats();
 
-            // Set the dropdown to show the newly added video
-            const videoSelect = document.getElementById('videoSelect');
-            const newIndex = mediaLibrary.videos.length - 1;
-            videoSelect.value = newIndex;
-
+            showProgress('✅ Upload complete!', 100);
             console.log('✅ Video uploaded:', file.name, (file.size / 1024 / 1024).toFixed(2) + ' MB');
+            hideProgress();
         } catch (error) {
             console.error('❌ Error saving video:', error);
-            alert('Error saving video. Storage might be full.');
+            showProgress('❌ Upload failed', 0);
+            setTimeout(hideProgress, 2000);
         }
     };
 
     reader.onerror = function(error) {
         console.error('❌ Error reading video file:', error);
-        alert('Error uploading video file. Please try again.');
+        showProgress('❌ Upload failed', 0);
+        setTimeout(hideProgress, 2000);
     };
 
     reader.readAsDataURL(file);
@@ -663,8 +555,12 @@ async function handleAudioUpload(file) {
     const allowedTypes = ['audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/wav'];
     if (!validateFile(file, MAX_AUDIO_SIZE, allowedTypes)) return;
 
+    showProgress(`Uploading ${file.name}...`, 20);
+
     const reader = new FileReader();
     reader.onload = async function(e) {
+        showProgress(`Processing ${file.name}...`, 40);
+
         const audioData = {
             name: file.name,
             size: file.size,
@@ -674,56 +570,57 @@ async function handleAudioUpload(file) {
         };
 
         try {
-            // Save to IndexedDB
+            showProgress('Saving audio...', 60);
             const audioId = await MediaStorage.saveAudio(audioData);
             audioData.id = audioId;
 
-            // Reload library
+            showProgress('Reloading library...', 80);
             mediaLibrary = await loadMediaLibrary();
 
             // Use the audio
             useAudio(audioData);
 
             renderMediaLibrary();
-            populateMediaDropdowns();
             updateLibraryStats();
 
-            // Set the dropdown to show the newly added audio
-            const audioSelect = document.getElementById('audioSelect');
-            const newIndex = mediaLibrary.audio.length - 1;
-            audioSelect.value = newIndex;
-
+            showProgress('✅ Upload complete!', 100);
             console.log('✅ Audio uploaded:', file.name, (file.size / 1024 / 1024).toFixed(2) + ' MB');
+            hideProgress();
         } catch (error) {
             console.error('❌ Error saving audio:', error);
-            alert('Error saving audio. Storage might be full.');
+            showProgress('❌ Upload failed', 0);
+            setTimeout(hideProgress, 2000);
         }
     };
 
     reader.onerror = function(error) {
         console.error('❌ Error reading audio file:', error);
-        alert('Error uploading audio file. Please try again.');
+        showProgress('❌ Upload failed', 0);
+        setTimeout(hideProgress, 2000);
     };
 
     reader.readAsDataURL(file);
 }
 
 // Use video from library
-function useVideo(videoData) {
+async function useVideo(videoData) {
     const video = document.getElementById('bgVideo');
     const source = video.querySelector('source');
-    source.src = videoData.data;
+    source.src = videoData.url || videoData.data;
     video.load();
     video.play();
 
     // Save selected video ID to Firestore for public page
     updateSetting('selectedVideoId', videoData.id);
 
+    // Re-render to show active state
+    await renderMediaLibrary();
+
     console.log('▶️ Playing video:', videoData.name, (videoData.size / 1024 / 1024).toFixed(2) + ' MB');
 }
 
 // Use audio from library
-function useAudio(audioData) {
+async function useAudio(audioData) {
     // Stop current audio
     if (backgroundAudio) {
         backgroundAudio.pause();
@@ -731,7 +628,7 @@ function useAudio(audioData) {
     }
 
     // Create new audio
-    backgroundAudio = new Audio(audioData.data);
+    backgroundAudio = new Audio(audioData.url || audioData.data);
     backgroundAudio.loop = true;
     backgroundAudio.volume = 0.3;
     backgroundAudio.play();
@@ -739,17 +636,36 @@ function useAudio(audioData) {
     // Save selected audio ID to Firestore for public page
     updateSetting('selectedAudioId', audioData.id);
 
+    // Re-render to show active state
+    await renderMediaLibrary();
+
     console.log('🔊 Playing audio:', audioData.name, (audioData.size / 1024 / 1024).toFixed(2) + ' MB');
 }
 
 // Delete from library
 async function deleteFromLibrary(type, index) {
-    if (!confirm('🗑️ Delete this file from library?')) return;
-
     try {
         if (type === 'video') {
             const videoToDelete = mediaLibrary.videos[index];
+
+            // Delete the video
             await MediaStorage.delete('videos', videoToDelete.id);
+
+            // Find and delete associated screenshots
+            const associatedScreenshots = mediaLibrary.screenshots.filter(
+                s => s.videoName === videoToDelete.name
+            );
+
+            if (associatedScreenshots.length > 0) {
+                console.log(`🗑️ Deleting ${associatedScreenshots.length} associated screenshot(s)...`);
+                for (const screenshot of associatedScreenshots) {
+                    try {
+                        await MediaStorage.delete('screenshots', screenshot.id);
+                    } catch (error) {
+                        console.error('Error deleting screenshot:', error);
+                    }
+                }
+            }
 
             // Reload library
             mediaLibrary = await loadMediaLibrary();
@@ -766,6 +682,9 @@ async function deleteFromLibrary(type, index) {
                     video.load();
                 }
             }
+
+            // Re-render screenshot library
+            await renderScreenshotLibrary();
         } else if (type === 'audio') {
             const audioToDelete = mediaLibrary.audio[index];
             await MediaStorage.delete('audio', audioToDelete.id);
@@ -780,14 +699,12 @@ async function deleteFromLibrary(type, index) {
             }
         }
 
-        renderMediaLibrary();
-        populateMediaDropdowns();
+        await renderMediaLibrary();
         updateLibraryStats();
 
         console.log('✅ Deleted from library');
     } catch (error) {
         console.error('❌ Error deleting:', error);
-        alert('Error deleting file. Please try again.');
     }
 }
 
@@ -812,51 +729,103 @@ async function renderScreenshotLibrary() {
                 <img src="${screenshot.url || screenshot.data}" alt="${screenshot.name}">
                 <div class="screenshot-item-overlay">
                     <div class="screenshot-item-name">${screenshot.name}</div>
+                    <button class="library-btn delete" onclick="event.stopPropagation(); deleteScreenshot(${index});" style="position: absolute; top: 5px; right: 5px; z-index: 10;" title="Delete">🗑️</button>
                 </div>
             </div>
         `).join('');
     }
 }
 
+// Delete screenshot
+window.deleteScreenshot = async function(index) {
+    try {
+        const screenshot = mediaLibrary.screenshots[index];
+        showProgress('Deleting screenshot...', 50);
+        await MediaStorage.delete('screenshots', screenshot.id);
+        mediaLibrary = await loadMediaLibrary();
+        await renderScreenshotLibrary();
+        hideProgress();
+        console.log('✅ Screenshot deleted');
+    } catch (error) {
+        console.error('❌ Error deleting screenshot:', error);
+        hideProgress();
+    }
+}
+
 // Render media library
-function renderMediaLibrary() {
+async function renderMediaLibrary() {
+    // Get current settings to mark active items
+    let currentSettings = {};
+    try {
+        currentSettings = await FirebaseMediaStorage.getSettings();
+    } catch (error) {
+        console.log('No settings found');
+    }
+
+    const activeVideoId = currentSettings.selectedVideoId;
+    const activeAudioId = currentSettings.selectedAudioId;
+
     // Render videos
     const videoLibrary = document.getElementById('videoLibrary');
-    if (mediaLibrary.videos.length === 0) {
-        videoLibrary.innerHTML = '<div class="library-empty">No videos uploaded</div>';
-    } else {
-        videoLibrary.innerHTML = mediaLibrary.videos.map((vid, index) => `
-            <div class="library-item">
+
+    const videoItems = [
+        // NONE option
+        `<div class="library-item" style="background: #f5f5f5; border: 2px ${activeVideoId === 'none' ? 'solid #4CAF50' : 'dashed #ccc'};">
+            <div class="library-item-info">
+                <div class="library-item-name">🚫 No Video</div>
+                <div class="library-item-size">Disable background video</div>
+            </div>
+            <div class="library-item-actions">
+                <button class="library-btn use" onclick="disableVideo()" title="Disable video">✓</button>
+            </div>
+        </div>`,
+        // Regular videos
+        ...mediaLibrary.videos.map((vid, index) => `
+            <div class="library-item" style="border: 2px solid ${vid.id === activeVideoId ? '#4CAF50' : 'transparent'}; background: ${vid.id === activeVideoId ? '#e8f5e9' : 'white'};">
                 <div class="library-item-info">
-                    <div class="library-item-name">🎬 ${vid.name}</div>
+                    <div class="library-item-name">${vid.name}</div>
                     <div class="library-item-size">${(vid.size / 1024 / 1024).toFixed(2)} MB</div>
                 </div>
                 <div class="library-item-actions">
-                    <button class="library-btn use" onclick="useVideoFromLibrary(${index})" title="Use this video">▶️</button>
+                    <button class="library-btn use" onclick="useVideoFromLibrary(${index})" title="Use">▶️</button>
                     <button class="library-btn delete" onclick="deleteVideoFromLibrary(${index})" title="Delete">🗑️</button>
                 </div>
             </div>
-        `).join('');
-    }
+        `)
+    ];
+
+    videoLibrary.innerHTML = videoItems.join('');
 
     // Render audio
     const audioLibrary = document.getElementById('audioLibrary');
-    if (mediaLibrary.audio.length === 0) {
-        audioLibrary.innerHTML = '<div class="library-empty">No audio uploaded</div>';
-    } else {
-        audioLibrary.innerHTML = mediaLibrary.audio.map((aud, index) => `
-            <div class="library-item">
+
+    const audioItems = [
+        // NONE option
+        `<div class="library-item" style="background: #f5f5f5; border: 2px ${activeAudioId === 'none' ? 'solid #4CAF50' : 'dashed #ccc'};">
+            <div class="library-item-info">
+                <div class="library-item-name">🔇 No Audio</div>
+                <div class="library-item-size">Disable background audio</div>
+            </div>
+            <div class="library-item-actions">
+                <button class="library-btn use" onclick="disableAudio()" title="Disable audio">✓</button>
+            </div>
+        </div>`,
+        // Regular audio
+        ...mediaLibrary.audio.map((aud, index) => `
+            <div class="library-item" style="border: 2px solid ${aud.id === activeAudioId ? '#4CAF50' : 'transparent'}; background: ${aud.id === activeAudioId ? '#e8f5e9' : 'white'};">
                 <div class="library-item-info">
-                    <div class="library-item-name">🎵 ${aud.name}</div>
+                    <div class="library-item-name">${aud.name}</div>
                     <div class="library-item-size">${(aud.size / 1024 / 1024).toFixed(2)} MB</div>
                 </div>
                 <div class="library-item-actions">
-                    <button class="library-btn use" onclick="useAudioFromLibrary(${index})" title="Play this audio">▶️</button>
+                    <button class="library-btn use" onclick="useAudioFromLibrary(${index})" title="Use">▶️</button>
                     <button class="library-btn delete" onclick="deleteAudioFromLibrary(${index})" title="Delete">🗑️</button>
                 </div>
             </div>
-        `).join('');
-    }
+        `)
+    ];
+
+    audioLibrary.innerHTML = audioItems.join('');
 }
 
 // Use screenshot from library
@@ -877,26 +846,55 @@ async function useScreenshot(screenshot) {
     await renderScreenshotLibrary();
 }
 
+// Disable video/audio functions
+window.disableVideo = async function() {
+    const video = document.getElementById('bgVideo');
+    if (video) {
+        video.pause();
+        video.style.opacity = '0';
+    }
+    updateSetting('selectedVideoId', 'none');
+    await renderMediaLibrary();
+    console.log('🚫 Video disabled');
+};
+
+window.disableAudio = async function() {
+    if (backgroundAudio) {
+        backgroundAudio.pause();
+        backgroundAudio = null;
+    }
+    updateSetting('selectedAudioId', 'none');
+    await renderMediaLibrary();
+    console.log('🔇 Audio disabled');
+};
+
 // Global functions for onclick handlers
 window.useVideoFromLibrary = function(index) {
+    const video = document.getElementById('bgVideo');
+    if (video) video.style.opacity = '1';
     useVideo(mediaLibrary.videos[index]);
 };
 
-window.deleteVideoFromLibrary = function(index) {
-    deleteFromLibrary('video', index);
+window.deleteVideoFromLibrary = async function(index) {
+    showProgress('Deleting video...', 50);
+    await deleteFromLibrary('video', index);
+    hideProgress();
 };
 
 window.useAudioFromLibrary = function(index) {
     useAudio(mediaLibrary.audio[index]);
 };
 
-window.deleteAudioFromLibrary = function(index) {
-    deleteFromLibrary('audio', index);
+window.deleteAudioFromLibrary = async function(index) {
+    showProgress('Deleting audio...', 50);
+    await deleteFromLibrary('audio', index);
+    hideProgress();
 };
 
 window.useScreenshotFromLibrary = function(index) {
     useScreenshot(mediaLibrary.screenshots[index]);
 };
+
 
 // Update library statistics
 function updateLibraryStats() {
@@ -942,6 +940,117 @@ function applyVideoSpeed(speed) {
 }
 
 // Save all settings to Firestore
+// Generate static HTML for public page
+function generateStaticHTML(settings, customerId) {
+    const baseUrl = 'https://ai-webpages.web.app';
+
+    // Get video and audio URLs
+    let videoUrl = '';
+    let posterUrl = '';
+    let audioUrl = '';
+
+    if (settings.selectedVideoId && settings.selectedVideoId !== 'none') {
+        const video = mediaLibrary.videos.find(v => v.id === settings.selectedVideoId);
+        if (video && video.url) {
+            videoUrl = video.url;
+            // Find matching screenshot for poster
+            const screenshot = mediaLibrary.screenshots.find(s => s.videoName === video.name);
+            if (screenshot && screenshot.url) {
+                posterUrl = screenshot.url;
+            }
+        }
+    }
+
+    if (settings.selectedAudioId && settings.selectedAudioId !== 'none') {
+        const audio = mediaLibrary.audio.find(a => a.id === settings.selectedAudioId);
+        if (audio && audio.url) {
+            audioUrl = audio.url;
+        }
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${settings.companyName} - ${settings.tagline}">
+    <title>${settings.companyName}</title>
+    <link rel="stylesheet" href="${baseUrl}/assets/css/styles.css">
+    <style>
+        .logo h1 { font-size: ${settings.titleSize}rem !important; }
+        .about-text { font-size: ${settings.bodySize}rem !important; }
+        body, h1, h2, h3, p, a { color: ${settings.fontColor} !important; }
+        .video-overlay { animation-duration: ${settings.animDuration}s !important; }
+        @keyframes videoFade {
+            0% { background: rgba(0, 0, 0, ${1 - (settings.minTransparency / 100)}); }
+            50% { background: rgba(0, 0, 0, ${1 - (settings.maxTransparency / 100)}); }
+            100% { background: rgba(0, 0, 0, ${1 - (settings.minTransparency / 100)}); }
+        }
+        ${settings.cardBackground ? `.card { background-image: url('${settings.cardBackground}') !important; }` : ''}
+    </style>
+</head>
+<body>
+    ${videoUrl ? `<div class="video-background">
+        <video autoplay muted loop playsinline playbackRate="${settings.videoSpeed / 100}"${posterUrl ? ` poster="${posterUrl}"` : ''}>
+            <source src="${videoUrl}" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>` : ''}
+
+    <div class="container">
+        <div class="card">
+            <header class="hero">
+                <div class="logo">
+                    <h1>${settings.companyName}</h1>
+                </div>
+                <p class="tagline">${settings.tagline}</p>
+            </header>
+
+            <section class="about">
+                <h2>${settings.aboutTitle}</h2>
+                <p class="about-text">${settings.aboutText1}</p>
+                <p class="about-text">${settings.aboutText2}</p>
+            </section>
+
+            <section class="contact">
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <div class="contact-icon">📧</div>
+                        <h3>Email</h3>
+                        <a href="mailto:${settings.contactEmail}">${settings.contactEmail}</a>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">📱</div>
+                        <h3>Phone</h3>
+                        <a href="tel:${settings.contactPhone.replace(/\s/g, '')}">${settings.contactPhone}</a>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">📍</div>
+                        <h3>Office</h3>
+                        <p>${settings.contactAddress}</p>
+                    </div>
+                </div>
+            </section>
+
+            <footer>
+                <p>&copy; ${new Date().getFullYear()} ${settings.companyName}. All rights reserved.</p>
+            </footer>
+        </div>
+    </div>
+
+    ${audioUrl ? `<audio id="bgAudio" autoplay loop>
+        <source src="${audioUrl}" type="audio/mpeg">
+    </audio>
+    <script>
+        const audio = document.getElementById('bgAudio');
+        if (audio) audio.volume = 0.3;
+    </script>` : ''}
+</body>
+</html>`;
+
+    return html;
+}
+
 async function saveAllSettings() {
     const card = document.querySelector('.card');
     const cardBgImage = card.style.backgroundImage;
@@ -963,6 +1072,10 @@ async function saveAllSettings() {
         console.log('No existing settings, using defaults');
     }
 
+    // Get slug from input (allow empty for root page)
+    const slugInput = document.getElementById('slugInput');
+    const slug = slugInput ? slugInput.value.trim() : '';
+
     const settings = {
         ...existingSettings, // Preserve existing settings
         companyName: document.querySelector('[data-field="companyName"]').textContent,
@@ -980,18 +1093,34 @@ async function saveAllSettings() {
         maxTransparency: parseInt(document.getElementById('maxTransparencySlider').value),
         animDuration: parseFloat(document.getElementById('animSpeedSlider').value),
         videoSpeed: parseInt(document.getElementById('videoSpeedSlider').value),
-        cardBackground: cardBackground
+        cardBackground: cardBackground,
+        slug: slug // Empty string is valid for root page
     };
 
     try {
-        // Save to Firestore
-        await FirebaseMediaStorage.saveSettings(settings);
-        console.log('💾 Settings saved to Firestore:', settings);
-
-        // Show success message
         const saveBtn = document.getElementById('saveBtn');
         const originalText = saveBtn.textContent;
-        saveBtn.textContent = '✅ Saved to Cloud!';
+
+        // Save to Firestore
+        saveBtn.textContent = '💾 Saving settings...';
+        await FirebaseMediaStorage.saveSettings(settings);
+        console.log('💾 Settings saved to Firestore');
+
+        // Generate and save static HTML
+        saveBtn.textContent = '📄 Generating static page...';
+        const staticHTML = generateStaticHTML(settings, customerId);
+        // Use 'index' for root page (empty slug), otherwise use the slug value
+        const pageSlug = settings.slug === '' ? 'index' : settings.slug;
+        const storageRef = storage.ref(`public-pages/${pageSlug}.html`);
+        const blob = new Blob([staticHTML], { type: 'text/html' });
+        await storageRef.put(blob, {
+            contentType: 'text/html',
+            cacheControl: 'public, max-age=300'
+        });
+        console.log(`📄 Static page saved: public-pages/${pageSlug}.html`);
+
+        // Show success message
+        saveBtn.textContent = '✅ Saved!';
         saveBtn.style.background = '#28a745';
 
         setTimeout(() => {
@@ -1000,7 +1129,11 @@ async function saveAllSettings() {
         }, 2000);
     } catch (error) {
         console.error('❌ Error saving settings:', error);
-        alert('Error saving settings: ' + error.message);
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.textContent = '❌ Error saving';
+        setTimeout(() => {
+            saveBtn.textContent = '💾 Save All Changes';
+        }, 2000);
     }
 }
 
@@ -1090,5 +1223,15 @@ async function loadSavedSettings() {
             card.style.backgroundSize = 'cover';
             card.style.backgroundPosition = 'center';
         }
+    }
+    // Always update slug input, even if empty (for root page)
+    const slugInput = document.getElementById('slugInput');
+    const publicUrlPreview = document.getElementById('publicUrlPreview');
+    if (slugInput) {
+        slugInput.value = settings.slug || '';
+    }
+    if (publicUrlPreview) {
+        const slugText = settings.slug || '';
+        publicUrlPreview.textContent = slugText ? `https://ai-webpages.web.app/${slugText}` : 'https://ai-webpages.web.app/';
     }
 }

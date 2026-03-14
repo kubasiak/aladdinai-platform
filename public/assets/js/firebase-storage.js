@@ -128,27 +128,60 @@ const FirebaseMediaStorage = {
     async getAllVideos() {
         const customerId = this.customerId;
         const snapshot = await db.collection('customers').doc(customerId)
-            .collection('videos').orderBy('timestamp', 'desc').get();
+            .collection('videos').get();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(video => {
+                // Only return videos with valid Firebase Storage URLs
+                if (!video.url) return false;
+                if (video.url === 'undefined') return false;
+                if (video.url.includes('undefined')) return false;
+                // Must be a Firebase Storage URL (not local paths like assets/...)
+                if (!video.url.startsWith('https://firebasestorage.googleapis.com')) return false;
+                return true;
+            })
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     },
 
     // Get all audio for customer
     async getAllAudio() {
         const customerId = this.customerId;
         const snapshot = await db.collection('customers').doc(customerId)
-            .collection('audio').orderBy('timestamp', 'desc').get();
+            .collection('audio').get();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(audio => {
+                // Only return audio with valid Firebase Storage URLs
+                if (!audio.url) return false;
+                if (audio.url === 'undefined') return false;
+                if (audio.url.includes('undefined')) return false;
+                // Must be a Firebase Storage URL
+                if (!audio.url.startsWith('https://firebasestorage.googleapis.com')) return false;
+                return true;
+            })
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     },
 
     // Get all screenshots for customer
     async getAllScreenshots() {
         const customerId = this.customerId;
         const snapshot = await db.collection('customers').doc(customerId)
-            .collection('screenshots').orderBy('timestamp', 'desc').get();
+            .collection('screenshots').get();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(screenshot => {
+                // Only return screenshots with valid Firebase Storage URLs
+                if (!screenshot.url) return false;
+                if (screenshot.url === 'undefined') return false;
+                if (screenshot.url.includes('undefined')) return false;
+                // Must be a Firebase Storage URL
+                if (!screenshot.url.startsWith('https://firebasestorage.googleapis.com')) return false;
+                return true;
+            })
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     },
 
     // Get specific item

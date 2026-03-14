@@ -1,0 +1,33 @@
+/* Screenshot delete button styles */
+.screenshot-item {
+    position: relative;
+}
+
+.screenshot-delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 53, 69, 0.95) !important;
+    color: white !important;
+    border: 2px solid white !important;
+    border-radius: 50% !important;
+    width: 28px !important;
+    height: 28px !important;
+    cursor: pointer !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    transition: all 0.2s !important;
+    z-index: 10 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+.screenshot-delete-btn:hover {
+    background: #dc3545 !important;
+    transform: scale(1.1) !important;
+}
+
+.screenshot-item:hover .screenshot-delete-btn {
+    display: block !important;
+}

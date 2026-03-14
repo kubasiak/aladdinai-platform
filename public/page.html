@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .loading {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading page...</p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // Get customer ID from URL
+        function getCustomerId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('customer') || params.get('id') || '4Lerh1eC5mXlOskOzgNCRAXrxwd2';
+        }
+
+        async function loadStaticPage() {
+            const customerId = getCustomerId();
+
+            try {
+                // Load static HTML from Firestore
+                const doc = await db.collection('customers').doc(customerId).get();
+
+                if (doc.exists && doc.data().staticHTML) {
+                    // Replace entire document with static HTML
+                    document.open();
+                    document.write(doc.data().staticHTML);
+                    document.close();
+                    console.log('⚡ Loaded static HTML (fast!)');
+                } else {
+                    // Fallback to dynamic page
+                    console.log('No static HTML found, redirecting to index.html');
+                    window.location.href = '/index.html?customer=' + customerId;
+                }
+            } catch (error) {
+                console.error('Error loading static page:', error);
+                // Fallback to dynamic page
+                window.location.href = '/index.html?customer=' + customerId;
+            }
+        }
+
+        loadStaticPage();
+    </script>
+</body>
+</html>

@@ -1,29 +1,84 @@
 // Public Page - Firebase-enabled
 // Loads settings and media from Firestore (no authentication required)
 
-// Configuration: Set your customer ID here
-// After you create your admin user, paste their UID here
-const CUSTOMER_ID = 'YOUR_CUSTOMER_ID_HERE'; // Replace with actual customer UID from Firebase Auth
-
 let backgroundAudio = null;
+
+// Get customer ID from URL path or query parameter
+function getCustomerIdentifier() {
+    // Get slug from URL path (e.g., /aladdinai)
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    const slug = pathParts[0];
+
+    // If no slug or index.html, use empty string to indicate root
+    if (!slug || slug === 'index.html') {
+        return ''; // Empty string = root page
+    }
+
+    return slug;
+}
+
+// Find customer by slug
+async function findCustomerBySlug(slug) {
+    try {
+        const snapshot = await db.collection('customers')
+            .where('settings.slug', '==', slug)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) {
+            console.log('No customer found with slug:', slug);
+            return null;
+        }
+
+        return snapshot.docs[0].id;
+    } catch (error) {
+        console.error('Error finding customer:', error);
+        return null;
+    }
+}
 
 // Initialize and load content
 document.addEventListener('DOMContentLoaded', async function() {
     const video = document.getElementById('bgVideo');
 
-    // Check if customer ID is configured
-    if (CUSTOMER_ID === 'YOUR_CUSTOMER_ID_HERE') {
-        console.warn('⚠️ Customer ID not configured. Please set CUSTOMER_ID in index-firebase.js');
-        console.log('📝 Steps to configure:');
-        console.log('1. Create admin user in Firebase Auth');
-        console.log('2. Copy their UID');
-        console.log('3. Paste it into CUSTOMER_ID in assets/js/index-firebase.js');
+    // Get slug from URL
+    const slug = getCustomerIdentifier();
+
+    let customerId;
+
+    if (slug === '') {
+        // Root page - find customer with empty slug or first customer
+        console.log('🔍 Loading root page - finding customer with empty/no slug');
+        const snapshot = await db.collection('customers')
+            .where('settings.slug', 'in', ['', null])
+            .limit(1)
+            .get();
+
+        if (!snapshot.empty) {
+            customerId = snapshot.docs[0].id;
+        } else {
+            // No customer with empty slug, try getting the first customer
+            const firstCustomer = await db.collection('customers').limit(1).get();
+            if (!firstCustomer.empty) {
+                customerId = firstCustomer.docs[0].id;
+            }
+        }
+    } else {
+        console.log('🔍 Looking up customer for slug:', slug);
+        customerId = await findCustomerBySlug(slug);
+    }
+
+    if (!customerId) {
+        console.error('❌ No customer found');
+        document.body.innerHTML = '<div style="padding: 50px; text-align: center;"><h1>Page Not Found</h1><p>No customer page found</p></div>';
         return;
     }
 
+    console.log('✅ Found customer:', customerId);
+
     try {
         // Load settings from Firestore (public read access)
-        const doc = await db.collection('customers').doc(CUSTOMER_ID).get();
+        const doc = await db.collection('customers').doc(customerId).get();
 
         if (!doc.exists || !doc.data().settings) {
             console.log('No settings found for customer. Using defaults.');
@@ -38,12 +93,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Load and play selected video if specified
         if (settings.selectedVideoId && settings.selectedVideoId !== 'none') {
-            await loadSelectedVideo(settings.selectedVideoId);
+            await loadSelectedVideo(settings.selectedVideoId, customerId);
         }
 
         // Load and play selected audio if specified
         if (settings.selectedAudioId && settings.selectedAudioId !== 'none') {
-            await loadSelectedAudio(settings.selectedAudioId);
+            await loadSelectedAudio(settings.selectedAudioId, customerId);
         }
 
         // Play video
@@ -118,9 +173,9 @@ async function applySettings(settings) {
 }
 
 // Load selected video from Firestore
-async function loadSelectedVideo(videoId) {
+async function loadSelectedVideo(videoId, customerId) {
     try {
-        const doc = await db.collection('customers').doc(CUSTOMER_ID)
+        const doc = await db.collection('customers').doc(customerId)
             .collection('videos').doc(videoId).get();
 
         if (doc.exists) {
@@ -141,9 +196,9 @@ async function loadSelectedVideo(videoId) {
 }
 
 // Load selected audio from Firestore
-async function loadSelectedAudio(audioId) {
+async function loadSelectedAudio(audioId, customerId) {
     try {
-        const doc = await db.collection('customers').doc(CUSTOMER_ID)
+        const doc = await db.collection('customers').doc(customerId)
             .collection('audio').doc(audioId).get();
 
         if (doc.exists) {
@@ -204,4 +259,3 @@ function applyVideoSpeed(speed) {
 }
 
 console.log('✅ Public page Firebase integration loaded');
-console.log('📍 Customer ID:', CUSTOMER_ID);
