@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Template - AladdinAI Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #b0b0b0;
+        }
+
+        .warning {
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .warning-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .warning-text {
+            color: #fbbf24;
+            font-weight: 500;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .template-card {
+            background: rgba(26, 26, 46, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .template-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .template-card.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .template-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .template-preview {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .template-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .template-description {
+            color: #b0b0b0;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .template-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .template-features li {
+            padding: 0.5rem 0;
+            color: #93c5fd;
+            font-size: 0.9rem;
+        }
+
+        .template-features li::before {
+            content: '→ ';
+            margin-right: 0.5rem;
+        }
+
+        .actions {
+            text-align: center;
+        }
+
+        .confirm-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            border: none;
+            padding: 1.2rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .confirm-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+
+        .confirm-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Choose Your Template</h1>
+            <p>Select a template for your landing page</p>
+        </div>
+
+        <div class="warning">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">This choice is permanent and cannot be changed later</span>
+        </div>
+
+        <div class="template-grid">
+            <div class="template-card" data-template="classic">
+                <div class="template-preview">💎</div>
+                <h3 class="template-name">Classic Single Card</h3>
+                <p class="template-description">
+                    Simple, elegant single-card layout perfect for professional landing pages and company presentations.
+                </p>
+                <ul class="template-features">
+                    <li>Hero section with company name & tagline</li>
+                    <li>About section with two text blocks</li>
+                    <li>Contact section with email, phone & address</li>
+                    <li>Background video & audio support</li>
+                    <li>Customizable styling & transparency effects</li>
+                </ul>
+            </div>
+
+            <div class="template-card" data-template="aimachine">
+                <div class="template-preview">🤖</div>
+                <h3 class="template-name">AImachine Professional</h3>
+                <p class="template-description">
+                    Professional multi-section website with hero images, company showcase, and modern design. Perfect for engineering and tech companies.
+                </p>
+                <ul class="template-features">
+                    <li>Fixed header with navigation & contact button</li>
+                    <li>Dual hero split with background images & hover effects</li>
+                    <li>Company intro with feature cards</li>
+                    <li>Solutions showcase (4 cards with SVG icons)</li>
+                    <li>Project portfolio gallery (4 images)</li>
+                    <li>CTA section with background image</li>
+                    <li>Multi-column footer with links & contact</li>
+                    <li>Bright blue (#00a8ff) & green (#00ff88) color scheme</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="confirmButton" class="confirm-button" disabled>
+                Select a Template to Continue
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <p>Setting up your template...</p>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- Firebase Storage -->
+    <script src="/assets/js/firebase-storage.js"></script>
+
+    <!-- Template Registry -->
+    <script src="/templates/template-registry.js"></script>
+    <script src="/templates/classic/template.js"></script>
+    <script src="/templates/aimachine/template.js"></script>
+
+    <script>
+        let selectedTemplate = null;
+        let currentUser = null;
+
+        // Check authentication
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                console.log('Not authenticated, redirecting to login...');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = user;
+
+            // Check if user already has a template selected
+            try {
+                await FirebaseMediaStorage.init(user.uid);
+                const settings = await FirebaseMediaStorage.getSettings();
+
+                if (settings.templateType) {
+                    console.log('Template already selected:', settings.templateType);
+                    // Redirect to admin panel
+                    window.location.href = 'admin.html';
+                    return;
+                }
+            } catch (error) {
+                console.log('No existing settings, continuing with template selection');
+            }
+        });
+
+        // Template selection
+        const templateCards = document.querySelectorAll('.template-card');
+        const confirmButton = document.getElementById('confirmButton');
+
+        templateCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected from all cards
+                templateCards.forEach(c => c.classList.remove('selected'));
+
+                // Add selected to clicked card
+                card.classList.add('selected');
+
+                // Store selected template
+                selectedTemplate = card.dataset.template;
+
+                // Enable confirm button
+                confirmButton.disabled = false;
+                confirmButton.textContent = `Continue with ${selectedTemplate === 'classic' ? 'Classic' : 'AImachine'} Template`;
+            });
+        });
+
+        // Confirm button
+        confirmButton.addEventListener('click', async () => {
+            if (!selectedTemplate || !currentUser) {
+                alert('Please select a template');
+                return;
+            }
+
+            confirmButton.disabled = true;
+            document.getElementById('loading').classList.add('show');
+
+            try {
+                // Get template defaults
+                const template = window.TemplateRegistry.get(selectedTemplate);
+
+                // Create initial settings with template
+                const settings = {
+                    templateType: selectedTemplate,
+                    templateVersion: '1.0',
+                    selectedVideoId: null,
+                    selectedAudioId: null,
+                    cardBackground: null,
+                    slug: '', // Empty for root page
+                    [selectedTemplate]: template.defaultSettings
+                };
+
+                // Save settings to Firestore
+                await FirebaseMediaStorage.saveSettings(settings);
+
+                console.log('✅ Template selected and saved:', selectedTemplate);
+
+                // Redirect to admin panel
+                window.location.href = 'admin.html';
+            } catch (error) {
+                console.error('Error saving template selection:', error);
+                alert('Error saving template: ' + error.message);
+                confirmButton.disabled = false;
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -65,7 +65,50 @@ async function loadMediaLibrary() {
     }
 }
 
-// Note: No migration needed for Firebase - data is in Firestore
+// Display current template in UI
+function displayCurrentTemplate(templateType) {
+    const currentTemplateEl = document.getElementById('currentTemplate');
+    if (!currentTemplateEl) return;
+
+    try {
+        const template = window.TemplateRegistry.get(templateType);
+        currentTemplateEl.textContent = template.name;
+        currentTemplateEl.style.color = '#ffffff';
+        currentTemplateEl.style.fontWeight = '600';
+    } catch (error) {
+        currentTemplateEl.textContent = templateType;
+        console.error('Could not get template info:', error);
+    }
+}
+
+// Run template system migration if needed
+async function runTemplateMigration() {
+    try {
+        const settings = await FirebaseMediaStorage.getSettings();
+
+        // Check if migration is needed
+        if (window.TemplateMigration && window.TemplateMigration.needsMigration(settings)) {
+            console.log('🔄 Running template system migration...');
+
+            const migratedSettings = await window.TemplateMigration.autoMigrate(
+                settings,
+                async (newSettings) => {
+                    await FirebaseMediaStorage.saveSettings(newSettings);
+                }
+            );
+
+            console.log('✅ Template migration complete');
+            return migratedSettings;
+        } else {
+            console.log('✓ Settings already on template system (or migration not loaded)');
+            return settings;
+        }
+    } catch (error) {
+        console.error('Error during migration:', error);
+        // Continue anyway - migration is not critical
+        return null;
+    }
+}
 
 let mediaLibrary = { videos: [], audio: [], screenshots: [] };
 let backgroundAudio = null;
@@ -127,6 +170,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Populate media dropdowns
 // Initialize admin controls
 async function initializeAdmin() {
+    // Run migration if needed
+    await runTemplateMigration();
+
+    // Check if user has selected a template
+    const settings = await FirebaseMediaStorage.getSettings();
+    if (!settings.templateType) {
+        console.log('No template selected, redirecting to template selector...');
+        window.location.href = 'template-selector.html';
+        return;
+    }
+
+    // Display current template
+    displayCurrentTemplate(settings.templateType);
+
     await loadSavedSettings();
     setupLiveControls();
     setupEditableFields();
@@ -958,123 +1015,69 @@ function applyVideoSpeed(speed) {
     }
 }
 
-// Save all settings to Firestore
-// Generate static HTML for public page
+// Generate static HTML for public page using template system
 async function generateStaticHTML(settings, customerId) {
     const baseUrl = 'https://ai-webpages.web.app';
 
-    // Get video and audio URLs
-    let videoUrl = '';
-    let posterUrl = '';
-    let audioUrl = '';
+    // Get customer's template type (default to 'classic')
+    const templateType = settings.templateType || 'classic';
 
+    // Get template from registry
+    let template;
+    try {
+        template = window.TemplateRegistry.get(templateType);
+    } catch (error) {
+        console.error('Template not found:', templateType, '- falling back to classic');
+        template = window.TemplateRegistry.get('classic');
+    }
+
+    // Get template-specific settings
+    let templateSettings;
+    if (settings[templateType]) {
+        templateSettings = settings[templateType];
+    } else {
+        // If no template-specific settings, use defaults
+        console.warn('No settings found for template:', templateType, '- using defaults');
+        templateSettings = template.defaultSettings;
+    }
+
+    // Prepare media object
+    const media = {
+        selectedVideo: null,
+        selectedAudio: null,
+        cardBackground: settings.cardBackground || null,
+        allVideos: mediaLibrary.videos,
+        allAudio: mediaLibrary.audio,
+        allScreenshots: mediaLibrary.screenshots
+    };
+
+    // Get selected video
     if (settings.selectedVideoId && settings.selectedVideoId !== 'none') {
         const video = mediaLibrary.videos.find(v => v.id === settings.selectedVideoId);
         if (video && video.url) {
-            videoUrl = video.url;
-            // Use card background as poster (or find matching screenshot)
+            media.selectedVideo = video;
+            // Add poster URL
             if (settings.cardBackground) {
-                posterUrl = settings.cardBackground;
+                media.selectedVideo.posterUrl = settings.cardBackground;
             } else {
                 const screenshot = mediaLibrary.screenshots.find(s => s.videoName === video.name);
                 if (screenshot && screenshot.url) {
-                    posterUrl = screenshot.url;
+                    media.selectedVideo.posterUrl = screenshot.url;
                 }
             }
         }
     }
 
+    // Get selected audio
     if (settings.selectedAudioId && settings.selectedAudioId !== 'none') {
         const audio = mediaLibrary.audio.find(a => a.id === settings.selectedAudioId);
         if (audio && audio.url) {
-            audioUrl = audio.url;
+            media.selectedAudio = audio;
         }
     }
 
-    // Inline CSS for instant rendering (no external file load)
-    const inlineCSS = await fetch('/assets/css/styles.css').then(r => r.text()).catch(() => '');
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="${settings.companyName} - ${settings.tagline}">
-    <title>${settings.companyName}</title>
-    <style>
-        ${inlineCSS}
-    </style>
-    <style>
-        .logo h1 { font-size: ${settings.titleSize}rem !important; }
-        .about-text { font-size: ${settings.bodySize}rem !important; }
-        body, h1, h2, h3, p, a { color: ${settings.fontColor} !important; }
-        .video-overlay { animation-duration: ${settings.animDuration}s !important; }
-        @keyframes videoFade {
-            0% { background: rgba(0, 0, 0, ${1 - (settings.minTransparency / 100)}); }
-            50% { background: rgba(0, 0, 0, ${1 - (settings.maxTransparency / 100)}); }
-            100% { background: rgba(0, 0, 0, ${1 - (settings.minTransparency / 100)}); }
-        }
-        ${settings.cardBackground ? `.card { background-image: url('${settings.cardBackground}') !important; }` : ''}
-    </style>
-</head>
-<body>
-    ${videoUrl ? `<div class="video-background">
-        <video autoplay muted loop playsinline playbackRate="${settings.videoSpeed / 100}"${posterUrl ? ` poster="${posterUrl}"` : ''}>
-            <source src="${videoUrl}" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-    </div>` : ''}
-
-    <div class="container">
-        <div class="card">
-            <header class="hero">
-                <div class="logo">
-                    <h1>${settings.companyName}</h1>
-                </div>
-                <p class="tagline">${settings.tagline}</p>
-            </header>
-
-            <section class="about">
-                <h2>${settings.aboutTitle}</h2>
-                <p class="about-text">${settings.aboutText1}</p>
-                <p class="about-text">${settings.aboutText2}</p>
-            </section>
-
-            <section class="contact">
-                <div class="contact-grid">
-                    <div class="contact-item">
-                        <div class="contact-icon">📧</div>
-                        <h3>Email</h3>
-                        <a href="mailto:${settings.contactEmail}">${settings.contactEmail}</a>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon">📱</div>
-                        <h3>Phone</h3>
-                        <a href="tel:${settings.contactPhone.replace(/\s/g, '')}">${settings.contactPhone}</a>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon">📍</div>
-                        <h3>Office</h3>
-                        <p>${settings.contactAddress}</p>
-                    </div>
-                </div>
-            </section>
-
-            <footer>
-                <p>&copy; ${new Date().getFullYear()} ${settings.companyName}. All rights reserved.</p>
-            </footer>
-        </div>
-    </div>
-
-    ${audioUrl ? `<audio id="bgAudio" autoplay loop>
-        <source src="${audioUrl}" type="audio/mpeg">
-    </audio>
-    <script>
-        const audio = document.getElementById('bgAudio');
-        if (audio) audio.volume = 0.3;
-    </script>` : ''}
-</body>
-</html>`;
+    // Generate HTML using template
+    const html = await template.generateHTML(templateSettings, media, baseUrl);
 
     return html;
 }
