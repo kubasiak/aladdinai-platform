@@ -11,15 +11,17 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'kubasiak.anna@gmail.com';
     }
 
-    // Customer data: Public read, owner write
+    // Customer data: Public read, owner write, provider full access
     match /customers/{customerId} {
       allow read: if true;  // Public can view landing pages
-      allow write: if isOwner(customerId);  // Only owner can edit
+      allow write: if isOwner(customerId) || isProvider();  // Owner or provider can edit
+      allow delete: if isProvider();  // Provider can delete customers
 
       // Subcollections (videos, audio, screenshots)
       match /{subcollection}/{document} {
         allow read: if true;
-        allow write: if isOwner(customerId);
+        allow write: if isOwner(customerId) || isProvider();  // Owner or provider
+        allow delete: if isProvider();  // Provider can delete media
       }
     }
 
