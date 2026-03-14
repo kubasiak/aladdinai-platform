@@ -170,19 +170,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Populate media dropdowns
 // Initialize admin controls
 async function initializeAdmin() {
-    // Run migration if needed
-    await runTemplateMigration();
-
-    // Check if user has selected a template
+    // Get current settings
     const settings = await FirebaseMediaStorage.getSettings();
-    if (!settings.templateType) {
-        console.log('No template selected, redirecting to template selector...');
+
+    // Check if this is a brand new user (no settings at all in Firestore)
+    const customerId = currentUser.uid;
+    const doc = await db.collection('customers').doc(customerId).get();
+    const isNewUser = !doc.exists || !doc.data().settings;
+
+    // New users should select a template first
+    if (isNewUser) {
+        console.log('New user - redirecting to template selector...');
         window.location.href = 'template-selector.html';
         return;
     }
 
-    // Display current template
-    displayCurrentTemplate(settings.templateType);
+    // Existing users without templateType need migration
+    if (!settings.templateType) {
+        console.log('Existing user without template - running migration...');
+        await runTemplateMigration();
+        // Reload settings after migration
+        const migratedSettings = await FirebaseMediaStorage.getSettings();
+        displayCurrentTemplate(migratedSettings.templateType);
+    } else {
+        // User already has template selected
+        displayCurrentTemplate(settings.templateType);
+    }
 
     await loadSavedSettings();
     setupLiveControls();
