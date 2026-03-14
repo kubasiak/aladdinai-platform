@@ -40,7 +40,9 @@ exports.servePage = onRequest({
         const [content] = await file.download();
 
         res.set('Content-Type', 'text/html');
-        res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate'); // No caching for instant updates
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
         res.status(200).send(content);
 
     } catch (error) {

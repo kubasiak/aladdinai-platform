@@ -1186,7 +1186,7 @@ async function saveAllSettings() {
         const blob = new Blob([staticHTML], { type: 'text/html' });
         await storageRef.put(blob, {
             contentType: 'text/html',
-            cacheControl: 'public, max-age=300'
+            cacheControl: 'no-cache, no-store, must-revalidate' // No caching for instant updates
         });
         console.log(`✅ Static page saved: public-pages/${pageSlug}.html`);
 
