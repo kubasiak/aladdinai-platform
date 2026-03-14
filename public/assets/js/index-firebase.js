@@ -93,7 +93,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Load and play selected video if specified
         if (settings.selectedVideoId && settings.selectedVideoId !== 'none') {
-            await loadSelectedVideo(settings.selectedVideoId, customerId);
+            // Use card background as poster for smooth loading
+            const posterUrl = settings.cardBackground || settings.videoPoster || '';
+            await loadSelectedVideo(settings.selectedVideoId, customerId, posterUrl);
         }
 
         // Load and play selected audio if specified
@@ -173,7 +175,7 @@ async function applySettings(settings) {
 }
 
 // Load selected video from Firestore
-async function loadSelectedVideo(videoId, customerId) {
+async function loadSelectedVideo(videoId, customerId, posterUrl) {
     try {
         const doc = await db.collection('customers').doc(customerId)
             .collection('videos').doc(videoId).get();
@@ -182,6 +184,11 @@ async function loadSelectedVideo(videoId, customerId) {
             const videoData = doc.data();
             const video = document.getElementById('bgVideo');
             if (video && videoData.url) {
+                // Set poster for smooth loading experience
+                if (posterUrl) {
+                    video.poster = posterUrl;
+                }
+
                 const source = video.querySelector('source');
                 if (source) {
                     source.src = videoData.url;

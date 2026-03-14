@@ -607,11 +607,30 @@ async function useVideo(videoData) {
     const video = document.getElementById('bgVideo');
     const source = video.querySelector('source');
     source.src = videoData.url || videoData.data;
+
+    // Set poster to card background (if one is selected)
+    try {
+        const settings = await FirebaseMediaStorage.getSettings();
+        if (settings.cardBackground) {
+            video.poster = settings.cardBackground;
+            console.log('🖼️ Set video poster from card background');
+        } else {
+            // Fallback: try to find screenshot for this video
+            const videoScreenshot = mediaLibrary.screenshots.find(s => s.videoName === videoData.name);
+            if (videoScreenshot) {
+                video.poster = videoScreenshot.url || videoScreenshot.data;
+                console.log('🖼️ Set video poster from screenshot');
+            }
+        }
+    } catch (error) {
+        console.log('No poster available');
+    }
+
     video.load();
     video.play();
 
     // Save selected video ID to Firestore for public page
-    updateSetting('selectedVideoId', videoData.id);
+    await updateSetting('selectedVideoId', videoData.id);
 
     // Re-render to show active state
     await renderMediaLibrary();
