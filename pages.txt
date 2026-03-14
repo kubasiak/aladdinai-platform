@@ -6,35 +6,38 @@
 PUBLIC PAGES (Unauthenticated Users)
 ================================================================================
 
-/
+https://ai-webpages.web.app/
     Description: Root page - redirects to login
     Method: GET
     Access: Public
-    Redirects to: /login.html
+    Redirects to: https://ai-webpages.web.app/login.html
 
-/index.html
+https://ai-webpages.web.app/index.html
     Description: Index page - redirects to login
     Method: GET
     Access: Public
-    Redirects to: /login.html
+    Redirects to: https://ai-webpages.web.app/login.html
 
-/login.html
+https://ai-webpages.web.app/login.html
     Description: Customer login page
     Method: GET
     Access: Public
     Features: Email/username + password login
 
-/register.html
+https://ai-webpages.web.app/register.html
     Description: New customer registration
     Method: GET
     Access: Public (deprecated/unused)
     Note: Registration is done by provider, not self-service
 
-/:slug
+https://ai-webpages.web.app/:slug
     Description: Public customer pages (dynamic)
     Method: GET
     Access: Public
-    Examples: /aladdinai, /my-company, /demo
+    Examples:
+        https://ai-webpages.web.app/aladdinai
+        https://ai-webpages.web.app/my-company
+        https://ai-webpages.web.app/demo
     Served by: Cloud Function (servePage)
     Note: Shows static HTML generated from customer settings
 
@@ -42,7 +45,7 @@ PUBLIC PAGES (Unauthenticated Users)
 CUSTOMER PAGES (Authenticated Customers)
 ================================================================================
 
-/admin.html
+https://ai-webpages.web.app/admin.html
     Description: Admin panel for editing page content
     Method: GET
     Access: Authenticated customers only
@@ -58,7 +61,7 @@ CUSTOMER PAGES (Authenticated Customers)
         - Delete page functionality
     Requires: Customer must have selected template
 
-/template-selector.html
+https://ai-webpages.web.app/template-selector.html
     Description: Template selection page (first-time users)
     Method: GET
     Access: Authenticated customers (new users only)
@@ -78,7 +81,7 @@ CUSTOMER PAGES (Authenticated Customers)
 PROVIDER PAGES (Authenticated Provider)
 ================================================================================
 
-/provider.html
+https://ai-webpages.web.app/provider.html
     Description: Provider dashboard for managing all customers
     Method: GET
     Access: provider@aladdinai.com only
@@ -96,35 +99,35 @@ PROVIDER PAGES (Authenticated Provider)
 UTILITY/INTERNAL PAGES (Development/Testing)
 ================================================================================
 
-/page.html
+https://ai-webpages.web.app/page.html
     Description: Old page viewer (legacy)
     Method: GET
     Access: Public
     Status: Deprecated/unused
     Note: Replaced by Cloud Function serving static pages
 
-/list-pages.html
+https://ai-webpages.web.app/list-pages.html
     Description: List all customer pages (utility)
     Method: GET
     Access: Public
     Status: Development utility
     Note: May list all public pages in system
 
-/setup-customers.html
+https://ai-webpages.web.app/setup-customers.html
     Description: Initial setup utility
     Method: GET
     Access: Public
     Status: Development/migration utility
     Note: Used for initial customer setup or migration
 
-/test-deploy.html
+https://ai-webpages.web.app/test-deploy.html
     Description: Deployment testing page
     Method: GET
     Access: Public
     Status: Development/testing only
     Note: Tests Firebase Hosting deployment
 
-/_index-fallback.html
+https://ai-webpages.web.app/_index-fallback.html
     Description: Fallback index page
     Method: GET
     Access: Internal
