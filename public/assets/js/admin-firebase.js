@@ -930,6 +930,7 @@ async function renderMediaLibrary() {
                 </div>
                 <div class="library-item-actions">
                     <button class="library-btn use" onclick="useVideoFromLibrary(${index})" title="Use">▶️</button>
+                    <button class="library-btn" onclick="generateScreenshotFromVideo(${index})" style="background: #17a2b8;" title="Generate Screenshot">📸</button>
                     <button class="library-btn delete" onclick="deleteVideoFromLibrary(${index})" title="Delete">🗑️</button>
                 </div>
             </div>
@@ -1021,6 +1022,91 @@ window.deleteVideoFromLibrary = async function(index) {
     showProgress('Deleting video...', 50);
     await deleteFromLibrary('video', index);
     hideProgress();
+};
+
+// Generate screenshot from video
+window.generateScreenshotFromVideo = async function(index) {
+    try {
+        const video = mediaLibrary.videos[index];
+        showProgress('Generating screenshot from video...', 10);
+
+        // Create hidden video element
+        const videoEl = document.createElement('video');
+        videoEl.crossOrigin = 'anonymous';
+        videoEl.src = video.url;
+        videoEl.style.display = 'none';
+        document.body.appendChild(videoEl);
+
+        // Wait for video to load
+        await new Promise((resolve, reject) => {
+            videoEl.addEventListener('loadeddata', resolve);
+            videoEl.addEventListener('error', reject);
+        });
+
+        showProgress('Capturing frame...', 30);
+
+        // Seek to 1 second (or middle of video)
+        videoEl.currentTime = Math.min(1, videoEl.duration / 2);
+        await new Promise(resolve => {
+            videoEl.addEventListener('seeked', resolve, { once: true });
+        });
+
+        showProgress('Creating image...', 50);
+
+        // Create canvas and capture frame
+        const canvas = document.createElement('canvas');
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+        // Clean up video element
+        document.body.removeChild(videoEl);
+
+        showProgress('Uploading screenshot...', 70);
+
+        // Convert canvas to blob
+        const blob = await new Promise(resolve => {
+            canvas.toBlob(resolve, 'image/jpeg', 0.9);
+        });
+
+        // Generate filename
+        const screenshotName = `screenshot_${video.name.replace(/\.[^.]+$/, '')}_${Date.now()}.jpg`;
+        const storageRef = storage.ref(`customers/${customerId}/screenshots/${Date.now()}`);
+
+        // Upload to Storage
+        const snapshot = await storageRef.put(blob, {
+            contentType: 'image/jpeg'
+        });
+
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        // Save to Firestore
+        await db.collection('customers').doc(customerId)
+            .collection('screenshots').add({
+                name: screenshotName,
+                url: downloadURL,
+                size: blob.size,
+                videoName: video.name,
+                timestamp: Date.now()
+            });
+
+        showProgress('Refreshing library...', 90);
+
+        // Reload media library
+        mediaLibrary = await loadMediaLibrary();
+        await renderScreenshotLibrary();
+        updateLibraryStats();
+
+        showProgress('✅ Screenshot generated!', 100);
+        console.log('✅ Screenshot generated from video:', video.name);
+        setTimeout(hideProgress, 2000);
+
+    } catch (error) {
+        console.error('❌ Error generating screenshot:', error);
+        showProgress('❌ Failed to generate screenshot', 0);
+        setTimeout(hideProgress, 2000);
+    }
 };
 
 window.useAudioFromLibrary = function(index) {

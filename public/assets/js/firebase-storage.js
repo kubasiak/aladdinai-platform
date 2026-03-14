@@ -130,7 +130,7 @@ const FirebaseMediaStorage = {
         const snapshot = await db.collection('customers').doc(customerId)
             .collection('videos').get();
 
-        return snapshot.docs
+        const videos = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(video => {
                 // Only return videos with valid Firebase Storage URLs
@@ -140,8 +140,23 @@ const FirebaseMediaStorage = {
                 // Must be a Firebase Storage URL (not local paths like assets/...)
                 if (!video.url.startsWith('https://firebasestorage.googleapis.com')) return false;
                 return true;
-            })
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            });
+
+        // Check if files actually exist in Storage and clean up orphans
+        const validVideos = [];
+        for (const video of videos) {
+            try {
+                const storageRef = storage.refFromURL(video.url);
+                await storageRef.getMetadata();
+                validVideos.push(video);
+            } catch (error) {
+                console.warn(`🧹 Cleaning up orphaned video: ${video.name}`);
+                await db.collection('customers').doc(customerId)
+                    .collection('videos').doc(video.id).delete();
+            }
+        }
+
+        return validVideos.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     },
 
     // Get all audio for customer
@@ -150,7 +165,7 @@ const FirebaseMediaStorage = {
         const snapshot = await db.collection('customers').doc(customerId)
             .collection('audio').get();
 
-        return snapshot.docs
+        const audioFiles = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(audio => {
                 // Only return audio with valid Firebase Storage URLs
@@ -160,8 +175,23 @@ const FirebaseMediaStorage = {
                 // Must be a Firebase Storage URL
                 if (!audio.url.startsWith('https://firebasestorage.googleapis.com')) return false;
                 return true;
-            })
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            });
+
+        // Check if files actually exist in Storage and clean up orphans
+        const validAudio = [];
+        for (const audio of audioFiles) {
+            try {
+                const storageRef = storage.refFromURL(audio.url);
+                await storageRef.getMetadata();
+                validAudio.push(audio);
+            } catch (error) {
+                console.warn(`🧹 Cleaning up orphaned audio: ${audio.name}`);
+                await db.collection('customers').doc(customerId)
+                    .collection('audio').doc(audio.id).delete();
+            }
+        }
+
+        return validAudio.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     },
 
     // Get all screenshots for customer
@@ -170,7 +200,7 @@ const FirebaseMediaStorage = {
         const snapshot = await db.collection('customers').doc(customerId)
             .collection('screenshots').get();
 
-        return snapshot.docs
+        const screenshots = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(screenshot => {
                 // Only return screenshots with valid Firebase Storage URLs
@@ -180,8 +210,24 @@ const FirebaseMediaStorage = {
                 // Must be a Firebase Storage URL
                 if (!screenshot.url.startsWith('https://firebasestorage.googleapis.com')) return false;
                 return true;
-            })
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            });
+
+        // Check if files actually exist in Storage and clean up orphans
+        const validScreenshots = [];
+        for (const screenshot of screenshots) {
+            try {
+                const storageRef = storage.refFromURL(screenshot.url);
+                await storageRef.getMetadata(); // This will throw if file doesn't exist
+                validScreenshots.push(screenshot);
+            } catch (error) {
+                // File doesn't exist - delete Firestore record
+                console.warn(`🧹 Cleaning up orphaned screenshot: ${screenshot.name}`);
+                await db.collection('customers').doc(customerId)
+                    .collection('screenshots').doc(screenshot.id).delete();
+            }
+        }
+
+        return validScreenshots.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     },
 
     // Get specific item
