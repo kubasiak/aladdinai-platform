@@ -1,0 +1,402 @@
+# AladdinAI Platform - Complete URL Map
+# Generated: 2026-03-14
+# Base URL: https://ai-webpages.web.app
+
+================================================================================
+PUBLIC PAGES (Unauthenticated Users)
+================================================================================
+
+/
+    Description: Root page - redirects to login
+    Method: GET
+    Access: Public
+    Redirects to: /login.html
+
+/index.html
+    Description: Index page - redirects to login
+    Method: GET
+    Access: Public
+    Redirects to: /login.html
+
+/login.html
+    Description: Customer login page
+    Method: GET
+    Access: Public
+    Features: Email/username + password login
+
+/register.html
+    Description: New customer registration
+    Method: GET
+    Access: Public (deprecated/unused)
+    Note: Registration is done by provider, not self-service
+
+/:slug
+    Description: Public customer pages (dynamic)
+    Method: GET
+    Access: Public
+    Examples: /aladdinai, /my-company, /demo
+    Served by: Cloud Function (servePage)
+    Note: Shows static HTML generated from customer settings
+
+================================================================================
+CUSTOMER PAGES (Authenticated Customers)
+================================================================================
+
+/admin.html
+    Description: Admin panel for editing page content
+    Method: GET
+    Access: Authenticated customers only
+    Features:
+        - Live content editing (contenteditable)
+        - Media library (videos, audio, screenshots)
+        - Font size controls (title, body)
+        - Overlay transparency controls
+        - Color picker (font color)
+        - Video playback speed
+        - Public URL slug management
+        - Save/Reset/Exit buttons
+        - Delete page functionality
+    Requires: Customer must have selected template
+
+/template-selector.html
+    Description: Template selection page (first-time users)
+    Method: GET
+    Access: Authenticated customers (new users only)
+    Features:
+        - Choose between Classic or AImachine templates
+        - Template preview images
+        - Permanent choice (cannot change later)
+    Auto-redirects: New users redirected here from /admin.html
+
+/:slug (customer's own page)
+    Description: Customer viewing their own public page
+    Method: GET
+    Access: Public (same as other public pages)
+    Note: No special treatment for viewing own page
+
+================================================================================
+PROVIDER PAGES (Authenticated Provider)
+================================================================================
+
+/provider.html
+    Description: Provider dashboard for managing all customers
+    Method: GET
+    Access: provider@aladdinai.com only
+    Features:
+        - Tabbed interface (Customers, Settings, Add Customer)
+        - Customer table with editable email/slug
+        - Delete page/account buttons
+        - Storage usage monitoring
+        - Platform limits configuration
+        - Bandwidth limits configuration
+        - Create new customer accounts
+    Columns: UID, Email, Page URL, Template, Storage Used, Usage %, Status, Actions
+
+================================================================================
+UTILITY/INTERNAL PAGES (Development/Testing)
+================================================================================
+
+/page.html
+    Description: Old page viewer (legacy)
+    Method: GET
+    Access: Public
+    Status: Deprecated/unused
+    Note: Replaced by Cloud Function serving static pages
+
+/list-pages.html
+    Description: List all customer pages (utility)
+    Method: GET
+    Access: Public
+    Status: Development utility
+    Note: May list all public pages in system
+
+/setup-customers.html
+    Description: Initial setup utility
+    Method: GET
+    Access: Public
+    Status: Development/migration utility
+    Note: Used for initial customer setup or migration
+
+/test-deploy.html
+    Description: Deployment testing page
+    Method: GET
+    Access: Public
+    Status: Development/testing only
+    Note: Tests Firebase Hosting deployment
+
+/_index-fallback.html
+    Description: Fallback index page
+    Method: GET
+    Access: Internal
+    Status: Fallback/error page
+    Note: Served when no other route matches
+
+================================================================================
+API ENDPOINTS (Cloud Functions)
+================================================================================
+
+Cloud Function: servePage
+    URL Pattern: / and /:slug
+    Method: GET
+    Access: Public
+    Location: functions/index.js
+    Purpose: Serves static HTML pages from Firebase Storage
+    Behavior:
+        - / → serves public-pages/index.html
+        - /:slug → serves public-pages/{slug}.html
+        - Returns 404 if page not found
+    Cache: No-cache, no-store, must-revalidate
+
+================================================================================
+STATIC ASSETS
+================================================================================
+
+/favicon.svg
+    Description: Aladdin lamp favicon (animated)
+    Access: Public
+
+/firebase-config.js
+    Description: Firebase configuration
+    Access: Public (safe, no secrets)
+
+/assets/css/
+    - styles.css (main stylesheet)
+    - admin-live.css (admin panel styles)
+
+/assets/js/
+    - admin-firebase.js (admin panel logic)
+    - provider.js (provider dashboard logic)
+    - firebase-storage.js (Firebase storage abstraction)
+    - video-cache.js (video caching for screenshots)
+    - template-migration.js (template system migration)
+    - media-import.js (media import/export)
+
+/templates/
+    - template-registry.js (template system)
+    - classic/template.js (Classic template)
+    - classic/styles.css (Classic template styles)
+    - aimachine/template.js (AImachine template)
+    - aimachine/styles.css (AImachine template styles)
+
+================================================================================
+AUTHENTICATION FLOWS
+================================================================================
+
+New Customer Registration (by provider):
+    1. Provider logs in → /provider.html
+    2. Provider clicks "Add Customer" tab
+    3. Provider enters email/username + password
+    4. Customer account created in Firebase Auth
+    5. Customer document created in Firestore
+    6. Provider sees success message
+
+Customer First Login:
+    1. Customer goes to /login.html
+    2. Customer enters email/username + password
+    3. Firebase Auth validates credentials
+    4. System checks if customer has template selected
+    5a. If no template → redirect to /template-selector.html
+    5b. If has template → redirect to /admin.html
+
+Customer Editing Page:
+    1. Customer logged in at /admin.html
+    2. Customer edits content (contenteditable fields)
+    3. Customer uploads media (videos, audio)
+    4. Customer generates screenshots from videos
+    5. Customer clicks "💾 Save All Changes"
+    6. Settings saved to Firestore
+    7. Static HTML generated and saved to Storage
+    8. Public page updated at /:slug
+
+Customer Viewing Public Page:
+    1. Anyone visits /:slug (e.g., /aladdinai)
+    2. Cloud Function receives request
+    3. Function loads public-pages/{slug}.html from Storage
+    4. Static HTML served to browser
+    5. No Firestore queries, instant load
+
+Provider Deleting Page:
+    1. Provider logs in → /provider.html
+    2. Provider clicks "📄 Delete Page" for customer
+    3. Confirmation dialog appears
+    4. Provider confirms deletion
+    5. Settings and templateType deleted from Firestore
+    6. Static page removed from Storage
+    7. Media files remain (videos, audio, screenshots)
+    8. Customer account remains active
+    9. Customer must select template again
+
+Provider Deleting Account:
+    1. Provider logs in → /provider.html
+    2. Provider clicks "🗑️ Delete Account" for customer
+    3. Double confirmation dialog appears
+    4. Provider confirms deletion
+    5. Customer auth account deleted
+    6. Firestore customer document deleted
+    7. All media files deleted from Storage
+    8. Static page removed
+    9. Customer completely removed from system
+
+================================================================================
+REDIRECT RULES (Firebase Hosting)
+================================================================================
+
+Priority Order:
+1. Static files served first (if file exists in /public)
+2. / → servePage Cloud Function
+3. /:slug → servePage Cloud Function
+
+Examples:
+    /admin.html → Serves static file (not Cloud Function)
+    /login.html → Serves static file (not Cloud Function)
+    / → Cloud Function → public-pages/index.html
+    /aladdinai → Cloud Function → public-pages/aladdinai.html
+    /index.html → Serves static redirect page
+
+================================================================================
+ERRORS & 404s
+================================================================================
+
+404 Scenarios:
+    1. /:slug not found
+        - User visits non-existent slug
+        - Cloud Function returns custom 404 HTML
+        - Message: "No page found for: {slug}"
+
+    2. Static file not found
+        - Firebase Hosting returns standard 404
+        - Redirects handled by firebase.json
+
+================================================================================
+CACHE POLICY
+================================================================================
+
+HTML Files:
+    Cache-Control: public, max-age=300 (5 minutes)
+
+CSS/JS Files:
+    Cache-Control: max-age=3600 (1 hour)
+
+Images:
+    Cache-Control: max-age=7200 (2 hours)
+
+Cloud Function Pages:
+    Cache-Control: no-cache, no-store, must-revalidate
+    Pragma: no-cache
+    Expires: 0
+
+Video Cache (IndexedDB):
+    Auto-cleanup: 7 days
+    Purpose: Faster screenshot generation
+    Storage: Browser IndexedDB
+
+================================================================================
+USER ROLES & PERMISSIONS
+================================================================================
+
+Public (Unauthenticated):
+    - View public pages (/:slug)
+    - Access login page
+    - Access registration page (unused)
+
+Customer (Authenticated):
+    - Edit own page (/admin.html)
+    - Select template (first time)
+    - Upload media files
+    - Generate screenshots
+    - Save settings
+    - Delete own page
+    - View own public page
+
+Provider (provider@aladdinai.com):
+    - All customer permissions
+    - View all customers (/provider.html)
+    - Create new customers
+    - Edit customer email/slug
+    - Delete customer pages
+    - Delete customer accounts
+    - Configure platform limits
+    - Monitor storage usage
+    - View all public pages
+
+================================================================================
+FIRESTORE COLLECTIONS
+================================================================================
+
+/customers/{customerId}
+    Fields:
+        - email (string)
+        - slug (string)
+        - displayName (string)
+        - templateType (string: "classic" | "aimachine")
+        - templateVersion (string: "1.0")
+        - settings (object: template-specific settings)
+        - createdAt (timestamp)
+        - createdBy (string: provider email)
+        - updatedAt (timestamp)
+
+/customers/{customerId}/videos/{videoId}
+    Fields:
+        - id, name, size, type, url, storagePath, timestamp, customerId
+
+/customers/{customerId}/audio/{audioId}
+    Fields:
+        - id, name, size, type, url, storagePath, timestamp, customerId
+
+/customers/{customerId}/screenshots/{screenshotId}
+    Fields:
+        - id, name, url, videoName, storagePath, timestamp, customerId
+
+/platform/limits
+    Fields:
+        - maxFileSize, storagePerCustomer, maxVideoSize, maxAudioSize
+
+/platform/bandwidth-limits
+    Fields:
+        - hourlyThresholdMB, dailyThresholdMB, mbPerView, forceImageMode
+
+================================================================================
+FIREBASE STORAGE PATHS
+================================================================================
+
+/customers/{customerId}/videos/{videoId}
+    - Video files uploaded by customers
+
+/customers/{customerId}/audio/{audioId}
+    - Audio files uploaded by customers
+
+/customers/{customerId}/screenshots/{screenshotId}
+    - Screenshots generated from videos
+
+/public-pages/{slug}.html
+    - Static HTML pages served to public
+    - Generated by admin panel
+    - Served by Cloud Function
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total HTML Pages: 11
+    - Public: 2 (login, index redirect)
+    - Customer: 2 (admin, template-selector)
+    - Provider: 1 (provider dashboard)
+    - Utility/Internal: 6 (page, list, setup, test, fallback, register)
+
+Dynamic Routes: 2
+    - / (root)
+    - /:slug (customer pages)
+
+Cloud Functions: 1
+    - servePage (handles dynamic routes)
+
+User Roles: 3
+    - Public (unauthenticated)
+    - Customer (authenticated)
+    - Provider (special admin)
+
+Templates: 2
+    - Classic (single-card layout)
+    - AImachine (multi-section professional)
+
+================================================================================
