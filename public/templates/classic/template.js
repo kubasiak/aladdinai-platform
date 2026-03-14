@@ -138,6 +138,11 @@
     </div>
 
     ${this.generateAudio(audioUrl)}
+
+    <!-- Admin Login Icon -->
+    <a href="${baseUrl}/login.html" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: rgba(102, 126, 234, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s; z-index: 9999;" onmouseover="this.style.background='rgba(102, 126, 234, 1)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(102, 126, 234, 0.9)'; this.style.transform='scale(1)'">
+        <span style="font-size: 24px;">🔐</span>
+    </a>
 </body>
 </html>`;
 
