@@ -3,6 +3,16 @@
 
 const PROVIDER_EMAIL = 'kubasiak.anna@gmail.com'; // Provider email
 
+// Secondary Firebase app for creating users without affecting current session
+let secondaryAuth = null;
+function initSecondaryAuth() {
+    if (!secondaryAuth) {
+        const secondaryApp = firebase.initializeApp(firebase.app().options, 'secondary');
+        secondaryAuth = secondaryApp.auth();
+    }
+    return secondaryAuth;
+}
+
 // Firebase pricing constants (Blaze plan)
 const PRICING = {
     storageFreeGB: 5, // 5GB free
@@ -434,9 +444,15 @@ async function createNewCustomer() {
     statusDiv.innerHTML = '<p style="color: #667eea;">⏳ Creating account...</p>';
 
     try {
-        // Create user with Firebase Auth
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        // Initialize secondary auth instance (doesn't affect current session)
+        const secondaryAuthInstance = initSecondaryAuth();
+
+        // Create user with secondary auth instance (won't log out provider)
+        const userCredential = await secondaryAuthInstance.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
+
+        // Sign out from secondary auth immediately
+        await secondaryAuthInstance.signOut();
 
         // Save customer metadata to Firestore
         await db.collection('customers').doc(uid).set({
