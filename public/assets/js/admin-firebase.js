@@ -1220,73 +1220,123 @@ async function loadSavedSettings() {
 
     if (!settings) return;
 
-    // Apply text content
-    if (settings.companyName) {
-        document.querySelector('[data-field="companyName"]').textContent = settings.companyName;
-    }
-    if (settings.tagline) {
-        document.querySelector('[data-field="tagline"]').textContent = settings.tagline;
-    }
-    if (settings.aboutTitle) {
-        document.querySelector('[data-field="aboutTitle"]').textContent = settings.aboutTitle;
-    }
-    if (settings.aboutText1) {
-        document.querySelector('[data-field="aboutText1"]').textContent = settings.aboutText1;
-    }
-    if (settings.aboutText2) {
-        document.querySelector('[data-field="aboutText2"]').textContent = settings.aboutText2;
-    }
-    if (settings.contactEmail) {
-        const emailEl = document.querySelector('[data-field="contactEmail"]');
-        emailEl.textContent = settings.contactEmail;
-        emailEl.href = 'mailto:' + settings.contactEmail;
-    }
-    if (settings.contactPhone) {
-        const phoneEl = document.querySelector('[data-field="contactPhone"]');
-        phoneEl.textContent = settings.contactPhone;
-        phoneEl.href = 'tel:' + settings.contactPhone.replace(/\s/g, '');
-    }
-    if (settings.contactAddress) {
-        document.querySelector('[data-field="contactAddress"]').innerHTML = settings.contactAddress;
+    // Get template type
+    const templateType = settings.templateType || 'classic';
+
+    // Only load Classic template settings (admin.html only supports Classic for now)
+    if (templateType !== 'classic') {
+        console.warn(`Template type "${templateType}" selected, but admin panel only supports Classic. Skipping settings load.`);
+        return;
     }
 
-    // Apply control values
-    if (settings.titleSize) {
-        document.getElementById('titleSizeSlider').value = settings.titleSize;
-        document.getElementById('titleSizeVal').textContent = settings.titleSize;
-        document.querySelector('.logo h1').style.fontSize = settings.titleSize + 'rem';
+    // Get Classic template settings
+    const classicSettings = settings.classic || {};
+
+    // Apply text content from Classic template structure
+    if (classicSettings.hero) {
+        if (classicSettings.hero.companyName) {
+            const el = document.querySelector('[data-field="companyName"]');
+            if (el) el.textContent = classicSettings.hero.companyName;
+        }
+        if (classicSettings.hero.tagline) {
+            const el = document.querySelector('[data-field="tagline"]');
+            if (el) el.textContent = classicSettings.hero.tagline;
+        }
     }
-    if (settings.bodySize) {
-        document.getElementById('bodySizeSlider').value = settings.bodySize;
-        document.getElementById('bodySizeVal').textContent = settings.bodySize;
-        document.querySelectorAll('.about-text').forEach(el => {
-            el.style.fontSize = settings.bodySize + 'rem';
-        });
+
+    if (classicSettings.about) {
+        if (classicSettings.about.title) {
+            const el = document.querySelector('[data-field="aboutTitle"]');
+            if (el) el.textContent = classicSettings.about.title;
+        }
+        if (classicSettings.about.text1) {
+            const el = document.querySelector('[data-field="aboutText1"]');
+            if (el) el.textContent = classicSettings.about.text1;
+        }
+        if (classicSettings.about.text2) {
+            const el = document.querySelector('[data-field="aboutText2"]');
+            if (el) el.textContent = classicSettings.about.text2;
+        }
     }
-    if (settings.fontColor) {
-        document.getElementById('fontColorPicker').value = settings.fontColor;
-        applyFontColor(settings.fontColor);
+
+    if (classicSettings.contact) {
+        if (classicSettings.contact.email) {
+            const emailEl = document.querySelector('[data-field="contactEmail"]');
+            if (emailEl) {
+                emailEl.textContent = classicSettings.contact.email;
+                emailEl.href = 'mailto:' + classicSettings.contact.email;
+            }
+        }
+        if (classicSettings.contact.phone) {
+            const phoneEl = document.querySelector('[data-field="contactPhone"]');
+            if (phoneEl) {
+                phoneEl.textContent = classicSettings.contact.phone;
+                phoneEl.href = 'tel:' + classicSettings.contact.phone.replace(/\s/g, '');
+            }
+        }
+        if (classicSettings.contact.address) {
+            const el = document.querySelector('[data-field="contactAddress"]');
+            if (el) el.innerHTML = classicSettings.contact.address;
+        }
     }
-    if (settings.minTransparency !== undefined) {
-        document.getElementById('minTransparencySlider').value = settings.minTransparency;
-        document.getElementById('minTransparencyVal').textContent = settings.minTransparency;
+
+    // Apply control values from Classic styling settings
+    if (classicSettings.styling) {
+        const styling = classicSettings.styling;
+
+        if (styling.titleSize) {
+            const slider = document.getElementById('titleSizeSlider');
+            const val = document.getElementById('titleSizeVal');
+            const el = document.querySelector('.logo h1');
+            if (slider) slider.value = styling.titleSize;
+            if (val) val.textContent = styling.titleSize;
+            if (el) el.style.fontSize = styling.titleSize + 'rem';
+        }
+        if (styling.bodySize) {
+            const slider = document.getElementById('bodySizeSlider');
+            const val = document.getElementById('bodySizeVal');
+            if (slider) slider.value = styling.bodySize;
+            if (val) val.textContent = styling.bodySize;
+            document.querySelectorAll('.about-text').forEach(el => {
+                el.style.fontSize = styling.bodySize + 'rem';
+            });
+        }
+        if (styling.fontColor) {
+            const picker = document.getElementById('fontColorPicker');
+            if (picker) picker.value = styling.fontColor;
+            applyFontColor(styling.fontColor);
+        }
+        if (styling.minTransparency !== undefined) {
+            const slider = document.getElementById('minTransparencySlider');
+            const val = document.getElementById('minTransparencyVal');
+            if (slider) slider.value = styling.minTransparency;
+            if (val) val.textContent = styling.minTransparency;
+        }
+        if (styling.maxTransparency !== undefined) {
+            const slider = document.getElementById('maxTransparencySlider');
+            const val = document.getElementById('maxTransparencyVal');
+            if (slider) slider.value = styling.maxTransparency;
+            if (val) val.textContent = styling.maxTransparency;
+        }
+        if (styling.animDuration) {
+            const slider = document.getElementById('animSpeedSlider');
+            const val = document.getElementById('animSpeedVal');
+            if (slider) slider.value = styling.animDuration;
+            if (val) val.textContent = styling.animDuration;
+        }
+        if (styling.minTransparency !== undefined && styling.maxTransparency !== undefined && styling.animDuration) {
+            updateOverlayAnimation(styling.minTransparency, styling.maxTransparency, styling.animDuration);
+        }
+        if (styling.videoSpeed) {
+            const slider = document.getElementById('videoSpeedSlider');
+            const val = document.getElementById('videoSpeedVal');
+            if (slider) slider.value = styling.videoSpeed;
+            if (val) val.textContent = styling.videoSpeed;
+            applyVideoSpeed(styling.videoSpeed);
+        }
     }
-    if (settings.maxTransparency !== undefined) {
-        document.getElementById('maxTransparencySlider').value = settings.maxTransparency;
-        document.getElementById('maxTransparencyVal').textContent = settings.maxTransparency;
-    }
-    if (settings.animDuration) {
-        document.getElementById('animSpeedSlider').value = settings.animDuration;
-        document.getElementById('animSpeedVal').textContent = settings.animDuration;
-    }
-    if (settings.minTransparency !== undefined && settings.maxTransparency !== undefined && settings.animDuration) {
-        updateOverlayAnimation(settings.minTransparency, settings.maxTransparency, settings.animDuration);
-    }
-    if (settings.videoSpeed) {
-        document.getElementById('videoSpeedSlider').value = settings.videoSpeed;
-        document.getElementById('videoSpeedVal').textContent = settings.videoSpeed;
-        applyVideoSpeed(settings.videoSpeed);
-    }
+
+    // Apply card background (stored at root settings level)
     if (settings.cardBackground) {
         const card = document.querySelector('.card');
         if (card) {
