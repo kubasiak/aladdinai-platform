@@ -96,15 +96,6 @@
                 <div class="library-stats">
                     <small>Total Size: <span id="librarySize">1.1 MB</span> / 20 MB</small>
                 </div>
-                <div style="margin: 10px 0; display: flex; gap: 10px;">
-                    <button onclick="exportMediaLibrary()" style="flex: 1; background: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem;" title="Export media library to JSON">
-                        📥 Export Library
-                    </button>
-                    <button onclick="document.getElementById('importFileInput').click()" style="flex: 1; background: #6f42c1; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem;" title="Import media library from JSON">
-                        📤 Import Library
-                    </button>
-                </div>
-                <input type="file" id="importFileInput" accept=".json" style="display: none;">
                 <div id="progressContainer" style="display: none; margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                     <div id="progressText" style="font-size: 0.9rem; margin-bottom: 5px;"></div>
                     <div style="width: 100%; height: 20px; background: #ddd; border-radius: 10px; overflow: hidden;">
@@ -140,6 +131,7 @@
 
             <div class="control-actions">
                 <button id="saveBtn" class="btn-save">💾 Save All Changes</button>
+                <button id="deletePageBtn" class="btn-delete" style="background: #dc3545;">🗑️ Delete Page</button>
                 <button id="resetBtn" class="btn-reset">🔄 Reset</button>
                 <button id="exitBtn" class="btn-exit">❌ Exit Admin</button>
             </div>
@@ -238,15 +230,6 @@
             MediaImportExport.exportMediaLibrary();
         }
 
-        // Handle import file selection
-        document.getElementById('importFileInput').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                await MediaImportExport.importMediaLibrary(file);
-                // Reset input so same file can be selected again
-                e.target.value = '';
-            }
-        });
     </script>
 </body>
 </html>

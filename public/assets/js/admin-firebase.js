@@ -381,6 +381,64 @@ function setupLiveControls() {
             window.location.href = '/login.html';
         }
     });
+
+    // Delete Page button
+    document.getElementById('deletePageBtn').addEventListener('click', async function() {
+        const confirmed = confirm(
+            '⚠️ WARNING: Delete this page?\n\n' +
+            'This will DELETE:\n' +
+            '• Your page settings and content\n' +
+            '• Your public static page\n' +
+            '• Template selection\n\n' +
+            'This will KEEP:\n' +
+            '• Your media files (videos, audio, screenshots)\n\n' +
+            'You will be asked to choose a template again.\n\n' +
+            'This action CANNOT be undone!'
+        );
+
+        if (!confirmed) return;
+
+        const doubleConfirm = prompt('Type "DELETE" to confirm page deletion:');
+        if (doubleConfirm !== 'DELETE') {
+            alert('Deletion cancelled.');
+            return;
+        }
+
+        try {
+            console.log('🗑️ Deleting page...');
+
+            // Get current settings to find slug
+            const settings = await FirebaseMediaStorage.getSettings();
+            const slug = settings.slug || '';
+
+            // Delete static HTML from Storage
+            const pageSlug = slug === '' ? 'index' : slug;
+            try {
+                const storageRef = storage.ref(`public-pages/${pageSlug}.html`);
+                await storageRef.delete();
+                console.log(`✅ Deleted static page: public-pages/${pageSlug}.html`);
+            } catch (error) {
+                console.warn('Static page not found or already deleted:', error.message);
+            }
+
+            // Delete settings from Firestore (keep media)
+            await db.collection('customers').doc(customerId).update({
+                settings: firebase.firestore.FieldValue.delete(),
+                templateType: firebase.firestore.FieldValue.delete(),
+                slug: firebase.firestore.FieldValue.delete()
+            });
+
+            console.log('✅ Page settings deleted');
+            alert('✅ Page deleted successfully! You will now choose a new template.');
+
+            // Redirect to template selector
+            window.location.href = 'template-selector.html';
+
+        } catch (error) {
+            console.error('❌ Error deleting page:', error);
+            alert('Error deleting page: ' + error.message);
+        }
+    });
 }
 
 // Setup editable fields

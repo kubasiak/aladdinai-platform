@@ -407,8 +407,11 @@ function renderCustomersTable() {
                 </td>
                 <td>${statusBadge}</td>
                 <td>
-                    <button onclick="deleteCustomer('${customer.id}', '${customer.email}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                        🗑️ Delete
+                    <button onclick="deleteCustomerPage('${customer.id}', '${customer.slug}')" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;" title="Delete page (keep account & media)">
+                        📄 Delete Page
+                    </button>
+                    <button onclick="deleteCustomer('${customer.id}', '${customer.email}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Delete entire account">
+                        🗑️ Delete Account
                     </button>
                 </td>
             </tr>
@@ -496,6 +499,57 @@ async function createNewCustomer() {
         }
 
         statusDiv.innerHTML = `<p style="color: #dc3545;">❌ ${errorMessage}</p>`;
+    }
+}
+
+// Delete customer page (keep account and media)
+async function deleteCustomerPage(customerId, customerSlug) {
+    const confirmed = confirm(
+        `⚠️ WARNING: Delete customer's page?\n\n` +
+        `This will DELETE:\n` +
+        `• Page settings and content\n` +
+        `• Public static page (${customerSlug})\n` +
+        `• Template selection\n\n` +
+        `This will KEEP:\n` +
+        `• Customer account\n` +
+        `• Media files (videos, audio, screenshots)\n\n` +
+        `Customer will need to choose template again.\n\n` +
+        `Continue?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        console.log(`🗑️ Deleting page for customer: ${customerId}`);
+
+        // Delete static HTML from Storage
+        if (customerSlug && customerSlug !== 'not-set') {
+            try {
+                const pageSlug = customerSlug === '' ? 'index' : customerSlug;
+                const pageRef = storage.ref(`public-pages/${pageSlug}.html`);
+                await pageRef.delete();
+                console.log(`  ✓ Deleted public page: ${pageSlug}.html`);
+            } catch (error) {
+                console.warn('  ⚠️ Error deleting public page:', error.message);
+            }
+        }
+
+        // Delete settings from Firestore (keep media)
+        await db.collection('customers').doc(customerId).update({
+            settings: firebase.firestore.FieldValue.delete(),
+            templateType: firebase.firestore.FieldValue.delete(),
+            slug: firebase.firestore.FieldValue.delete()
+        });
+
+        console.log(`  ✓ Deleted page settings`);
+        alert('✅ Page deleted successfully! Customer will choose a new template on next login.');
+
+        // Reload dashboard
+        await loadDashboard();
+
+    } catch (error) {
+        console.error('❌ Error deleting customer page:', error);
+        alert('Error deleting page: ' + error.message);
     }
 }
 
