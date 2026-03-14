@@ -228,6 +228,13 @@
         .customers-table td {
             padding: 12px 15px;
             border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .customers-table td:first-child {
+            max-width: 150px;
+            word-break: break-all;
+            font-size: 11px;
         }
 
         .customers-table tr:hover {
@@ -348,18 +355,19 @@
                             <table class="customers-table">
                                 <thead>
                                     <tr>
-                                        <th>Customer ID</th>
+                                        <th>UID</th>
                                         <th>Email</th>
+                                        <th>Page URL</th>
+                                        <th>Template</th>
                                         <th>Storage Used</th>
-                                        <th>Usage</th>
+                                        <th>Usage %</th>
                                         <th>Status</th>
-                                        <th>Est. Cost</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="customersTableBody">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                                        <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
                                             Loading customer data...
                                         </td>
                                     </tr>

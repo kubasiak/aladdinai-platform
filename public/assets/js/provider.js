@@ -169,10 +169,17 @@ async function loadAllCustomers() {
             // Get customer's storage usage
             const usage = await getCustomerStorageUsage(customerId);
 
+            // Extract settings data
+            const settings = customerData.settings || {};
+            const slug = customerData.slug || settings.slug || 'not-set';
+            const templateType = settings.templateType || customerData.templateType || 'none';
+
             return {
                 id: customerId,
                 email: customerData.email || 'Unknown',
-                settings: customerData.settings || {},
+                slug: slug,
+                templateType: templateType,
+                settings: settings,
                 usage: usage,
                 createdAt: customerData.createdAt
             };
@@ -335,7 +342,7 @@ function renderCustomersTable() {
     if (allCustomers.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
                     No customers found
                 </td>
             </tr>
@@ -361,17 +368,27 @@ function renderCustomersTable() {
             barClass = '';
         }
 
-        // Calculate cost for this customer
-        const customerCost = calculateStorageCost(usageMB);
-        const costIndicator = customerCost > 0
-            ? `<span class="cost-paid">$${customerCost.toFixed(2)}/mo</span>`
-            : '<span class="cost-free">$0.00 (Free)</span>';
+        // Page URL
+        const pageUrl = customer.slug !== 'not-set'
+            ? `https://ai-webpages.web.app/${customer.slug}`
+            : 'Not configured';
+        const pageLink = customer.slug !== 'not-set'
+            ? `<a href="${pageUrl}" target="_blank" style="color: #667eea; text-decoration: none;">${customer.slug}</a>`
+            : '<span style="color: #999;">not-set</span>';
+
+        // Template display
+        const templateDisplay = customer.templateType === 'classic' ? '💎 Classic'
+            : customer.templateType === 'aimachine' ? '🤖 AImachine'
+            : customer.templateType === 'none' ? '<span style="color: #999;">None</span>'
+            : customer.templateType;
 
         return `
             <tr>
-                <td><code>${customer.id.substring(0, 8)}...</code></td>
+                <td><code style="font-size: 11px;">${customer.id}</code></td>
                 <td>${customer.email}</td>
-                <td>${usageMB} MB / ${limitMB} MB<br><small>${customer.usage.fileCount} files (${customer.usage.videos}v, ${customer.usage.audio}a, ${customer.usage.screenshots}s)</small></td>
+                <td>${pageLink}</td>
+                <td>${templateDisplay}</td>
+                <td>${usageMB} MB / ${limitMB} MB<br><small style="color: #999;">${customer.usage.fileCount} files (${customer.usage.videos}v, ${customer.usage.audio}a, ${customer.usage.screenshots}s)</small></td>
                 <td>
                     <div class="usage-bar">
                         <div class="usage-bar-fill ${barClass}" style="width: ${Math.min(usagePercent, 100)}%"></div>
@@ -379,7 +396,6 @@ function renderCustomersTable() {
                     </div>
                 </td>
                 <td>${statusBadge}</td>
-                <td class="cost-indicator">${costIndicator}</td>
                 <td>
                     <button onclick="deleteCustomer('${customer.id}', '${customer.email}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
                         🗑️ Delete
