@@ -373,17 +373,12 @@ function setupLiveControls() {
     // Exit button
     document.getElementById('exitBtn').addEventListener('click', async function() {
         try {
-            // Get the slug from settings
-            const settings = await FirebaseMediaStorage.getSettings();
-            const slug = settings.slug || '';
-
             await auth.signOut();
-            // Redirect to root if slug is empty, otherwise to /{slug}
-            window.location.href = slug === '' ? '/' : `/${slug}`;
+            window.location.href = '/login.html';
         } catch (error) {
             console.error('Error signing out:', error);
             await auth.signOut();
-            window.location.href = '/';
+            window.location.href = '/login.html';
         }
     });
 }
@@ -1166,20 +1161,34 @@ async function saveAllSettings() {
         // Save to Firestore
         saveBtn.textContent = '💾 Saving settings...';
         await FirebaseMediaStorage.saveSettings(settings);
+
+        // Also save slug at root level for provider dashboard and other queries
+        await db.collection('customers').doc(customerId).set({
+            slug: slug
+        }, { merge: true });
+
         console.log('💾 Settings saved to Firestore');
 
         // Generate and save static HTML
         saveBtn.textContent = '📄 Generating static page...';
+        console.log('🔄 Generating static HTML with settings:', settings);
+
         const staticHTML = await generateStaticHTML(settings, customerId);
+        if (!staticHTML || staticHTML.length < 100) {
+            throw new Error('Generated HTML is invalid or too short');
+        }
+
         // Use 'index' for root page (empty slug), otherwise use the slug value
         const pageSlug = settings.slug === '' ? 'index' : settings.slug;
+        console.log(`📤 Uploading to: public-pages/${pageSlug}.html (${staticHTML.length} bytes)`);
+
         const storageRef = storage.ref(`public-pages/${pageSlug}.html`);
         const blob = new Blob([staticHTML], { type: 'text/html' });
         await storageRef.put(blob, {
             contentType: 'text/html',
             cacheControl: 'public, max-age=300'
         });
-        console.log(`📄 Static page saved: public-pages/${pageSlug}.html`);
+        console.log(`✅ Static page saved: public-pages/${pageSlug}.html`);
 
         // Show success message
         saveBtn.textContent = '✅ Saved!';
