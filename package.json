@@ -7,7 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test-all-pages.js",
+    "test:pages": "node test-all-pages.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   "homepage": "https://github.com/kubasiak/aladdinai-platform#readme",
   "dependencies": {
     "playwright": "^1.58.2",
+    "puppeteer": "^21.0.0",
     "ws": "^8.19.0"
   }
 }

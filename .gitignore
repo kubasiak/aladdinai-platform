@@ -36,3 +36,8 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+# Test outputs
+test-screenshots/
+test-results.json
+test-report.html
